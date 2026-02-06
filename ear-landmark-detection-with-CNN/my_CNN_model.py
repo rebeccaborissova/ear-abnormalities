@@ -1,7 +1,7 @@
 from keras.models import Sequential
 from keras.models import load_model
 from keras.layers import Conv2D, MaxPooling2D, Dropout, RepeatVector
-from keras.layers.normalization import BatchNormalization
+from keras.layers import BatchNormalization
 from keras.layers import Flatten, Dense
 
 def get_my_CNN_model_architecture():

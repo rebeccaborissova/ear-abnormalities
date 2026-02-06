@@ -4,7 +4,7 @@ from keras.preprocessing import image
 from keras.applications.imagenet_utils import preprocess_input
 
 
-def load_data(test=False, size=3000, test_size=630, single_img=False, single_img_path='give a path please'):
+def load_data(test=False, size=499, test_size=630, single_img=False, single_img_path='give a path please'):
 
 
     if (test):
@@ -32,7 +32,7 @@ def load_data(test=False, size=3000, test_size=630, single_img=False, single_img
             y = None
             return x, y         # return the single image as preprocessed for the model
 
-        img = image.load_img(img_path)
+        img = image.load_img(img_path, target_size=(224, 224))
         x = image.img_to_array(img)
         x = np.expand_dims(x, axis=0)
         x = preprocess_input(x)

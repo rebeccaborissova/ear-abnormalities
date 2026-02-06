@@ -12,7 +12,7 @@ def put_landmarks(i, pred, single_img=False):
     img_original = plt.imread(img_path)
 
     for j in range(0,55):  # drop the landmark points on the image
-        plt.scatter([pred[j]], [pred[j+55]])
+        plt.scatter([pred[j]], [pred[j+55]], s=5)
 
 
     plt.imshow(img_original)

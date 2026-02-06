@@ -4,7 +4,7 @@ from keras.optimizers import SGD, Adam
 import numpy as np
 
 # Load
-X_train, Y_train = load_data(size=3000)
+X_train, Y_train = load_data(size=499)
 
 # Shuffle
 np.random.seed(142)
@@ -16,7 +16,7 @@ np.random.shuffle(Y_train)
 my_model = get_my_CNN_model_architecture()
 
 # adam optimizer
-adam = Adam(lr=0.001, beta_1=0.9, beta_2=0.999, epsilon=None, decay=0.0, amsgrad=False)
+adam = Adam(learning_rate=0.001, beta_1=0.9, beta_2=0.999, amsgrad=False)
 
 # Compile
 compile_model(my_model, optimizer = adam, loss = 'mean_squared_error', metrics=['accuracy'])
