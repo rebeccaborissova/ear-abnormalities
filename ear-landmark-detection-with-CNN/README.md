@@ -1,3 +1,4 @@
+# SOURCE: https://github.com/kbulutozler/ear-landmark-detection-with-CNN - This is a model that we are referencing, and may tune and refine to see how we can adapt it to our goal of ear deformity classification.
 # Ear Landmark Detection with CNN
 
 There are 55 landmarks on human ear which help identifying the person. This model has 500 training images, 105 test images and corresponding landmarks focused on right ear. I also modified the images and landmarks to represent other forms such as left ear, rotated etc. You can get 3000 training 630 test images with this method if you run CreateDataSet.py. Before that, download the data folder from the link below. You can see names of the files & folders are compatible with the functions. 
