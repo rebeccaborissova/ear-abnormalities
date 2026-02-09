@@ -1,11 +1,11 @@
 # train.py
-# Trains ResNet-18 to predict ear landmarks.
+# Trains multi-stage heatmap model for ear landmarks .
 
 import os
 os.environ["MKL_THREADING_LAYER"] = "GNU"
 os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
 os.environ["OMP_NUM_THREADS"] = "1"
-os.environ["CUDA_VISIBLE_DEVICES"] = "7"  # pick a free GPU
+os.environ["CUDA_VISIBLE_DEVICES"] = "7" 
 # run 'nvidia-smi' in terminal to check GPU usage
 
 import torch
@@ -20,6 +20,7 @@ from utils import save_model
 
 # Number of landmarks
 NUM_LANDMARKS = 55
+NUM_STAGES = 6
 
 # Use GPU if available
 device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -28,44 +29,67 @@ if torch.cuda.is_available():
 else:
     print("Using cpu")
 
-# Load dataset
-train_dataset = EarDataset("../dataset/train", augment=True)  # Enable augmentation
+# Load dataset with heatmap targets
+train_dataset = EarDataset(
+    "/home/UFAD/mansapatel/CollectionA/train",
+    augment=True,
+    input_size=368,
+    heatmap_size=46
+)
 train_loader = DataLoader(train_dataset, batch_size=8, shuffle=True, num_workers=2, pin_memory=True)
 
 # Create model
-model = get_model(NUM_LANDMARKS).to(device)
+model = get_model(NUM_LANDMARKS, NUM_STAGES).to(device)
 
-# Use SmoothL1Loss for better robustness
-criterion = nn.SmoothL1Loss()
-optimizer = optim.AdamW(model.parameters(), lr=2e-4, weight_decay=1e-4)
+# Multi-stage MSE loss 
+criterion = nn.MSELoss()
+optimizer = optim.Adam(model.parameters(), lr=1e-4, weight_decay=1e-5)
 
-# Add learning rate scheduler with cosine annealing
-scheduler = optim.lr_scheduler.CosineAnnealingWarmRestarts(
-    optimizer, T_0=10, T_mult=2, eta_min=1e-6
-)
+# Learning rate scheduler
+scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=30, gamma=0.5)
 
 best_loss = float('inf')
+
+print(f"Training with {len(train_dataset)} images")
+print(f"Input size: 368x368, Heatmap size: 46x46")
+print(f"Number of stages: {NUM_STAGES}\n")
 
 # Training loop
 for epoch in range(100):
     model.train()
     total_loss = 0
 
-    for batch_idx, (imgs, landmarks) in enumerate(
+    for batch_idx, (imgs, target_heatmaps) in enumerate(
         tqdm(train_loader, desc=f"Epoch {epoch+1}")
     ):
         imgs = imgs.to(device)
-        landmarks = landmarks.to(device)
-
-        preds = model(imgs)
-        loss = criterion(preds, landmarks)
+        target_heatmaps = target_heatmaps.to(device)
+        
+        # Forward pass: get all stage outputs
+        # Shape: (batch, num_stages, num_landmarks, H, W)
+        stage_outputs = model(imgs)
+        
+        # Multi-stage loss: sum loss from all stages
+        loss = 0
+        for stage_idx in range(NUM_STAGES):
+            stage_heatmaps = stage_outputs[:, stage_idx, :, :, :]
+            # Resize to match target size if needed
+            if stage_heatmaps.shape[-2:] != target_heatmaps.shape[-2:]:
+                stage_heatmaps = torch.nn.functional.interpolate(
+                    stage_heatmaps,
+                    size=target_heatmaps.shape[-2:],
+                    mode='bilinear',
+                    align_corners=False
+                )
+            loss += criterion(stage_heatmaps, target_heatmaps)
+        
+        # Average loss across stages
+        loss = loss / NUM_STAGES
 
         optimizer.zero_grad()
         loss.backward()
         torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
         optimizer.step()
-
-        scheduler.step(epoch + batch_idx / len(train_loader))
 
         total_loss += loss.item()
 
@@ -83,5 +107,9 @@ for epoch in range(100):
     if (epoch + 1) % 10 == 0:
         save_model(model, f"ear_landmark_model_epoch_{epoch+1}.pth")
         print(f"  → Saved checkpoint at epoch {epoch+1}")
+    
+    # Step scheduler
+    scheduler.step()
+
 
 

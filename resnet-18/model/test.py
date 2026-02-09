@@ -2,30 +2,36 @@ import os
 os.environ["MKL_THREADING_LAYER"] = "GNU"
 os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
 os.environ["OMP_NUM_THREADS"] = "1"
-os.environ["CUDA_VISIBLE_DEVICES"] = "7"  # pick a free GPU
+os.environ["CUDA_VISIBLE_DEVICES"] = "7"  
 
 import torch
 import cv2
 import numpy as np
 from torch.utils.data import DataLoader
 from tqdm import tqdm
-from model import get_model
+from model import get_model, soft_argmax_2d
 from utils import load_model
 from dataset import EarDataset
 
-NUM_LANDMARKS = 55  # Must match training
+NUM_LANDMARKS = 55  
+NUM_STAGES = 6
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
 # Load model
-model = get_model(NUM_LANDMARKS).to(device)
-model = load_model(model, "ear_landmark_model_best_new.pth")
+model = get_model(NUM_LANDMARKS, NUM_STAGES).to(device)
+model = load_model(model, "ear_landmark_model_best.pth")
 model.eval()
 
-print("Using new improved model architecture")
-print("Loading best model checkpoint: ear_landmark_model_best_new.pth\n")
+print("Using multi-stage heatmap model (OpenPose-style)")
+print("Loading best model checkpoint: ear_landmark_model_best.pth\n")
 
 # Load test dataset
-test_dataset = EarDataset("../dataset/test")
+test_dataset = EarDataset(
+    "/home/UFAD/mansapatel/CollectionA/test",
+    augment=False,
+    input_size=368,
+    heatmap_size=46
+)
 test_loader = DataLoader(test_dataset, batch_size=1, shuffle=False)
 
 print(f"Testing on {len(test_dataset)} images...")
@@ -35,15 +41,21 @@ errors = []
 per_landmark_errors = []
 
 with torch.no_grad():
-    for idx, (imgs, landmarks) in enumerate(tqdm(test_loader)):
+    for idx, (imgs, target_heatmaps) in enumerate(tqdm(test_loader)):
         imgs = imgs.to(device)
-        landmarks = landmarks.cpu().numpy().reshape(-1, 2)
         
-        # Predict
-        preds = model(imgs).cpu().numpy().reshape(-1, 2)
+        # Get ground truth coordinates from heatmaps
+        landmarks_gt = soft_argmax_2d(target_heatmaps, normalize=True).cpu().numpy().squeeze()
         
-        # Calculate error per landmark (Euclidean distance)
-        landmark_errors = np.sqrt(np.sum((preds - landmarks) ** 2, axis=1))
+        # Predict: get all stages, use last stage
+        stage_outputs = model(imgs)
+        final_heatmaps = stage_outputs[:, -1, :, :, :]  # Last stage
+        
+        # Convert heatmaps to coordinates
+        preds = soft_argmax_2d(final_heatmaps, normalize=True).cpu().numpy().squeeze()
+        
+        # Calculate error per landmark (Euclidean distance in normalized space)
+        landmark_errors = np.sqrt(np.sum((preds - landmarks_gt) ** 2, axis=1))
         per_landmark_errors.append(landmark_errors)
         
         # Mean error for this image
@@ -122,45 +134,68 @@ worst_landmarks = avg_per_landmark.argsort()[-5:][::-1]
 for i, lm_idx in enumerate(worst_landmarks, 1):
     print(f"  {i}. Landmark #{lm_idx+1}: {avg_per_landmark[lm_idx]:.6f}")
 
-# Visualize predictions on first 5 images
-print("\nVisualizing predictions on first 5 images...")
+# Visualize predictions on images 11-20
+print("\nVisualizing predictions on images 11-20...")
 output_dir = "../test_results"
 os.makedirs(output_dir, exist_ok=True)
 
-for idx in range(min(10, len(test_dataset))):
-    # Get image and landmarks from dataset
-    img_tensor, landmarks_gt = test_dataset[idx]
+for idx in range(10, min(20, len(test_dataset))):
+    # Load original image (before any processing)
+    img_name = test_dataset.images[idx]
+    img_path = os.path.join(test_dataset.folder, img_name)
+    pts_path = img_path.replace(".png", ".pts")
     
-    # Construct image path
-    img_path = os.path.join(test_dataset.folder, test_dataset.images[idx])
-    img = cv2.imread(img_path)
-    h, w, _ = img.shape
+    # Read original image and landmarks
+    from dataset import read_pts_file
+    img_orig = cv2.imread(img_path)
+    landmarks_orig = read_pts_file(pts_path)
+    
+    # Get cropped/processed image for prediction
+    img_tensor, target_heatmap = test_dataset[idx]
+    
+    # Get ground truth from heatmap
+    landmarks_gt = soft_argmax_2d(target_heatmap.unsqueeze(0), normalize=True).cpu().numpy().squeeze()
     
     # Prepare input
     img_tensor = img_tensor.unsqueeze(0).to(device)
     
     # Predict
     with torch.no_grad():
-        pred = model(img_tensor).cpu().detach().numpy().reshape(-1, 2)
+        stage_outputs = model(img_tensor)
+        final_heatmaps = stage_outputs[:, -1, :, :, :]
+        pred = soft_argmax_2d(final_heatmaps, normalize=True).cpu().numpy().squeeze()
     
-    # Denormalize predictions
-    pred[:, 0] *= w
-    pred[:, 1] *= h
+    # For visualization: work on the cropped image since that's what the model saw
+    # Recreate the cropped image to match what dataset returns
+    h_orig, w_orig, _ = img_orig.shape
     
-    # Denormalize ground truth
-    landmarks_gt = landmarks_gt.numpy().reshape(-1, 2)
-    landmarks_gt[:, 0] *= w
-    landmarks_gt[:, 1] *= h
+    # Apply same cropping as dataset
+    x_min, y_min = landmarks_orig.min(axis=0)
+    x_max, y_max = landmarks_orig.max(axis=0)
+    ear_w = x_max - x_min
+    ear_h = y_max - y_min
+    pad = 10
+    s_x = max(int(x_min - ear_w * pad), 0)
+    e_x = min(int(x_max + ear_w * pad), w_orig)
+    s_y = max(int(y_min - ear_h * pad), 0)
+    e_y = min(int(y_max + ear_h * pad), h_orig)
+    
+    img_crop = img_orig[s_y:e_y, s_x:e_x, :]
+    h_crop, w_crop, _ = img_crop.shape
+    
+    # Denormalize predictions and ground truth to cropped image space
+    pred_px = pred * np.array([w_crop - 1, h_crop - 1])
+    gt_px = landmarks_gt * np.array([w_crop - 1, h_crop - 1])
     
     # Draw predictions (red) and ground truth (green)
-    for (x, y) in pred:
-        cv2.circle(img, (int(x), int(y)), 3, (0, 0, 255), -1)
-    for (x, y) in landmarks_gt:
-        cv2.circle(img, (int(x), int(y)), 3, (0, 255, 0), -1)
+    for (x, y) in pred_px:
+        cv2.circle(img_crop, (int(x), int(y)), 2, (0, 0, 255), -1)
+    for (x, y) in gt_px:
+        cv2.circle(img_crop, (int(x), int(y)), 2, (0, 255, 0), -1)
     
     # Save image
     output_path = os.path.join(output_dir, f"result_{idx+1}.png")
-    cv2.imwrite(output_path, img)
+    cv2.imwrite(output_path, img_crop)
     print(f"Saved visualization to {output_path}")
 
 print(f"\nAll visualizations saved to {output_dir}/")
