@@ -5,3 +5,5 @@ __pycache__/
 ear-landmark-detection-with-CNN/images
 ear-landmark-detection-with-CNN/data
 resnet-18/test_results/
+*.jpg
+*.png
