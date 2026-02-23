@@ -1,5 +1,5 @@
 # dataset.py
-# Loads images and their .pts landmark files for training with heatmap targets.
+# Loads images and their .txt landmark files for training with heatmap targets.
 
 import os
 import cv2
@@ -10,7 +10,7 @@ import random
 
 def read_pts_file(filepath):
     """
-    Reads a .pts landmark file and returns a numpy array of shape (55, 2)
+    Reads a .txt landmark file and returns a numpy array of shape (55, 2)
     """
     points = []
     with open(filepath, "r") as f:
@@ -74,7 +74,7 @@ class EarDataset(Dataset):
         self.images = []
         for filename in image_files:
             img_path = os.path.join(folder, filename)
-            pts_path = img_path.replace(".png", ".pts")
+            pts_path = img_path.replace(".png", ".txt")
             if not os.path.isfile(pts_path):
                 continue
             img = cv2.imread(img_path)
@@ -91,7 +91,7 @@ class EarDataset(Dataset):
         img_path = os.path.join(self.folder, img_name)
 
         # Corresponding landmark file
-        pts_path = img_path.replace(".png", ".pts")
+        pts_path = img_path.replace(".png", ".txt")
 
         # Load image
         img = cv2.imread(img_path)

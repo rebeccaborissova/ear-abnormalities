@@ -31,7 +31,7 @@ else:
 
 # Load dataset with heatmap targets
 train_dataset = EarDataset(
-    "/home/UFAD/mansapatel/CollectionA/train",
+    "/home/UFAD/rborissova/senior_project/data_combined",
     augment=True,
     input_size=368,
     heatmap_size=46
