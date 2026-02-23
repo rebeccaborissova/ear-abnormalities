@@ -27,7 +27,7 @@ print("Loading best model checkpoint: ear_landmark_model_best.pth\n")
 
 # Load test dataset
 test_dataset = EarDataset(
-    "/home/UFAD/mansapatel/CollectionA/test",
+    "/home/UFAD/rborissova/senior_project/data_test_combined",
     augment=False,
     input_size=368,
     heatmap_size=46
@@ -143,7 +143,7 @@ for idx in range(10, min(20, len(test_dataset))):
     # Load original image (before any processing)
     img_name = test_dataset.images[idx]
     img_path = os.path.join(test_dataset.folder, img_name)
-    pts_path = img_path.replace(".png", ".pts")
+    pts_path = img_path.replace(".png", ".txt")
     
     # Read original image and landmarks
     from dataset import read_pts_file
