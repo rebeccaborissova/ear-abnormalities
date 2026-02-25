@@ -20,7 +20,8 @@ train = range(1, 31)
 test = range(31, 51)
 
 for file in JSON_FILES_LABELS:
-    with open(os.path.join(LABELS_DIR, file)) as f:
+    file_path = os.path.join(LABELS_DIR, file)
+    with open(file_path) as f:
         labels = json.load(f)
 
     for entry in labels.values():
@@ -51,6 +52,6 @@ for file in JSON_FILES_LABELS:
             "}"
         ]
 
-        file_name = f"{prefix}_{number}_{side}.txt"
+        file_name = filename.replace(".jpg", ".txt")
         with open(os.path.join(output_dir, file_name), "w") as f:
             f.write("\n".join(lines) + "\n")
