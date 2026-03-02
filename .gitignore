@@ -7,3 +7,5 @@ ear-landmark-detection-with-CNN/data
 resnet-18/test_results/
 *.jpg
 *.png
+/gradio-env
+/.gradio
