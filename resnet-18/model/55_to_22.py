@@ -33,10 +33,7 @@ LANDMARK_MAPPING = {
     21: 25,
 }
 
-old_model = model.get_model(NUM_LANDMARKS_OLD, NUM_STAGES)
-checkpoint = torch.load(PRETRAINED_CKPT, map_location="cpu")
-
-old_model.load_state_dict(checkpoint["model_state_dict"])
+old_state = torch.load(PRETRAINED_CKPT, map_location="cpu")
 
 new_model = model.get_model(NUM_LANDMARKS_NEW, NUM_STAGES)
 new_state = new_model.state_dict()

@@ -6,7 +6,7 @@ from PIL import Image
 # Directories/files
 LANDMARKS_DIR = "/home/UFAD/rborissova/senior_project/BabyEar4k/landmarks"
 IMG_DIR = "/home/UFAD/rborissova/senior_project/BabyEar4k/images"
-OUTPUT_DIR = "/home/UFAD/rborissova/senior_project/BabyEar4k/labeled_ears"
+OUTPUT_DIR = "/home/UFAD/rborissova/senior_project/BabyEar4k/labeled_images"
 
 os.makedirs(os.path.join(OUTPUT_DIR, "train"), exist_ok=True)
 os.makedirs(os.path.join(OUTPUT_DIR, "test"),  exist_ok=True)
