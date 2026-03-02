@@ -74,16 +74,18 @@ def process_csv(input_path, output_path):
             # Calculate raw distances
             dist_0_19 = euclidean_distance(landmarks[0], landmarks[19])
             dist_4_17 = euclidean_distance(landmarks[4], landmarks[17])
-            dist_25_37 = euclidean_distance(landmarks[25], landmarks[37])
-            dist_0_9 = euclidean_distance(landmarks[0], landmarks[9])
+            dist_20_21 = euclidean_distance(landmarks[20], landmarks[21])
+            dist_0_8 = euclidean_distance(landmarks[0], landmarks[8])
+            dist_21_22 = euclidean_distance(landmarks[21], landmarks[22])
             
             # Normalize using dist_0_19 as reference (ear height)
             ref_distance = dist_0_19 if dist_0_19 > 0 else 1
             
             norm_dist_0_19 = 1.0  # Reference is always 1
             norm_dist_4_17 = dist_4_17 / ref_distance
-            norm_dist_25_37 = dist_25_37 / ref_distance
-            norm_dist_0_9 = dist_0_9 / ref_distance
+            norm_dist_20_21 = dist_20_21 / ref_distance
+            norm_dist_0_8 = dist_0_8 / ref_distance
+            norm_dist_21_22 = dist_21_22 / ref_distance
             
             # Curvature statistics (points 0 to 19)
             curvature_angle = calculate_curvature_angle(landmarks)
@@ -97,23 +99,24 @@ def process_csv(input_path, output_path):
                 'image_path': image_path,
                 'dist_0_19_raw': dist_0_19,
                 'dist_4_17_raw': dist_4_17,
-                'dist_25_37_raw': dist_25_37,
-                'dist_0_9_raw': dist_0_9,
+                'dist_20_21_raw': dist_20_21,
+                'dist_0_8_raw': dist_0_8,
+                'dist_21_22_raw': dist_21_22,
                 'dist_0_19_norm': norm_dist_0_19,
                 'dist_4_17_norm': norm_dist_4_17,
-                'dist_25_37_norm': norm_dist_25_37,
-                'dist_0_9_norm': norm_dist_0_9,
+                'dist_20_21_norm': norm_dist_20_21,
+                'dist_0_8_norm': norm_dist_0_8,
+                'dist_21_22_norm': norm_dist_21_22,
                 'curvature_angle_deg': curvature_angle,
                 'arc_length_raw': arc_length,
                 'arc_length_norm': norm_arc_length,
                 'chord_arc_ratio': chord_arc_ratio
             })
     
-    # Write output CSV
     fieldnames = [
         'image_path',
-        'dist_0_19_raw', 'dist_4_17_raw', 'dist_25_37_raw', 'dist_0_9_raw',
-        'dist_0_19_norm', 'dist_4_17_norm', 'dist_25_37_norm', 'dist_0_9_norm',
+        'dist_0_19_raw', 'dist_4_17_raw', 'dist_20_21_raw', 'dist_0_8_raw', 'dist_21_22_raw',
+        'dist_0_19_norm', 'dist_4_17_norm', 'dist_20_21_norm', 'dist_0_8_norm', 'dist_21_22_norm',
         'curvature_angle_deg', 'arc_length_raw', 'arc_length_norm', 'chord_arc_ratio'
     ]
     
