@@ -9,3 +9,6 @@ resnet-18/test_results/
 *.png
 /gradio-env
 /.gradio
+resnet-18/model/tests/.env
+*.pth
+resnet-18/model/tests/test_outputs/
