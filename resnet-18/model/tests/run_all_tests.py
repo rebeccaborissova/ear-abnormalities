@@ -10,6 +10,7 @@ TESTS = [
     ("Accuracy Calculation", "test_accuracy.py"),
     ("Robustness", "test_robustness.py"),
     ("Combined model on original dataset", "test_original_dataset.py"),
+    ("23-Point Model on Adult Dataset",    "test_adult_dataset.py"),
 ]
 
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
