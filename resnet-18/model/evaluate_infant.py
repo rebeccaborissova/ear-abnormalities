@@ -7,10 +7,10 @@ from torch.utils.data import DataLoader
 from infant_dataset import get_train_test_split
 from model import get_model, soft_argmax_2d
 
-NUM_LANDMARKS = 22
+NUM_LANDMARKS = 23
 NUM_STAGES = 6
 
-CKPT_PATH = f"infant_model_{NUM_LANDMARKS}lm_best.pth"
+CKPT_PATH = f"infant_ear_model_{NUM_LANDMARKS}lm_best.pth"
 OUTPUT_DIR = f"infant_eval_results_{NUM_LANDMARKS}"
 
 IMAGES_DIR = "/home/UFAD/rborissova/senior_project/BabyEar4k/images"

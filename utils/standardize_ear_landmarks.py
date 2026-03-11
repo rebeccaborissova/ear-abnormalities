@@ -11,12 +11,15 @@ JSON_FILES_LABELS = [
     "0011-0020.json",
     "0021-0030.json",
     "0031-0050.json",
+    "0100-0150.json",
+    "category 2 over 60.json",
+    "4_score_ears.json"
 ]
 
 os.makedirs(TRAIN_DIR, exist_ok=True)
 os.makedirs(TEST_DIR,  exist_ok=True)
 
-train = range(1, 31)
+train = list(range(1, 31)) + list(range(52, 1000))
 test = range(31, 51)
 
 for file in JSON_FILES_LABELS:
@@ -24,7 +27,9 @@ for file in JSON_FILES_LABELS:
     with open(file_path) as f:
         labels = json.load(f)
 
-    for entry in labels.values():
+    entries = labels["_via_img_metadata"].values() if "_via_img_metadata" in labels else labels.values()
+
+    for entry in entries:
         filename = entry["filename"]
         stem = os.path.splitext(filename)[0]
         number = int(stem.split("_")[0])

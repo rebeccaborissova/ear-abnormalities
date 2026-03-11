@@ -67,7 +67,7 @@ def process_csv(input_path, output_path):
             landmark_str = ', '.join(row[1:])
             landmarks = parse_landmarks(landmark_str)
             
-            if len(landmarks) < 55:
+            if len(landmarks) < 23:
                 print(f"Warning: {image_path} has only {len(landmarks)} landmarks, skipping")
                 continue
             
@@ -133,7 +133,7 @@ if __name__ == '__main__':
         input_file = sys.argv[1]
         output_file = sys.argv[2]
     else:
-        input_file = '/home/UFAD/angelali/ears/model_output_example.csv'
-        output_file = '/home/UFAD/angelali/ears/measurements_output.csv'
+        input_file = 'landmarks.csv'
+        output_file = 'measurements.csv'
     
     process_csv(input_file, output_file)

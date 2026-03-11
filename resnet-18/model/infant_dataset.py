@@ -1,20 +1,13 @@
 import os
 import cv2
-import json
 import numpy as np
 import torch
 from torch.utils.data import Dataset
 import random
 
-LABELS_DIR = "/home/UFAD/rborissova/senior_project/BabyEar4k/labels"
+LANDMARKS_TRAIN_DIR = "/home/UFAD/rborissova/senior_project/BabyEar4k/landmarks/train"
+LANDMARKS_TEST_DIR = "/home/UFAD/rborissova/senior_project/BabyEar4k/landmarks/test"
 IMAGES_DIR = "/home/UFAD/rborissova/senior_project/BabyEar4k/images"
-
-JSON_FILES = [
-    "0001-0010.json",
-    "0011-0020.json",
-    "0021-0030.json",
-    "0031-0050.json",
-]
 
 LANDMARK_MAPPING = {
     0: 0,
@@ -43,23 +36,35 @@ LANDMARK_MAPPING = {
 
 def load_all_annotations(num_landmarks):
     all_annotations = {}
-    for json_file in JSON_FILES:
-        json_path = os.path.join(LABELS_DIR, json_file)
 
-        with open(json_path) as f:
-            data = json.load(f)
-        
-        for val in data.values():
-            filename = val["filename"]
-            regions = val["regions"]
-            
+    for landmarks_dir in [LANDMARKS_TRAIN_DIR, LANDMARKS_TEST_DIR]:
+        for txt_file in sorted(os.listdir(landmarks_dir)):
+            if not txt_file.endswith('.txt'):
+                continue
+
+            txt_path = os.path.join(landmarks_dir, txt_file)
             points = []
-            for region in regions[:num_landmarks]:
-                cx = region["shape_attributes"]["cx"]
-                cy = region["shape_attributes"]["cy"]
-                points.append([cx, cy])
-            all_annotations[filename] = np.array(points, dtype=np.float32)
-    
+            inside = False
+
+            with open(txt_path, 'r') as f:
+                for line in f:
+                    line = line.strip()
+                    if line == '{':
+                        inside = True
+                        continue
+                    if line == '}':
+                        break
+                    if inside and line:
+                        x, y = line.split()
+                        points.append([float(x), float(y)])
+
+            if len(points) < num_landmarks:
+                print(f"{txt_file}: expected {num_landmarks}, got {len(points)}, skipping")
+                continue
+
+            img_name = txt_file.replace('.txt', '.jpg')
+            all_annotations[img_name] = np.array(points[:num_landmarks], dtype=np.float32)
+
     return all_annotations
 
 
@@ -124,7 +129,7 @@ class InfantEarDataset(Dataset):
         )
 
 
-def get_train_test_split(test_ratio=0.2, seed=42, num_landmarks=22):
+def get_train_test_split(test_ratio=0.2, seed=42, num_landmarks=23):
     annotations = load_all_annotations(num_landmarks)
     all_filenames = sorted(annotations.keys())
 
@@ -145,7 +150,7 @@ def get_train_test_split(test_ratio=0.2, seed=42, num_landmarks=22):
 
 
 if __name__ == "__main__":
-    train_dataset, test_dataset = get_train_test_split(num_landmarks=22)
+    train_dataset, test_dataset = get_train_test_split(num_landmarks=23)
     img, heatmaps = train_dataset[0]
     
     print(f"Image shape: {img.shape}")

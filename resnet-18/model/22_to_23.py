@@ -1,7 +1,7 @@
 import torch
 import model
 
-PRETRAINED_CKPT = "infant_ear_model_best.pth"
+PRETRAINED_CKPT = "infant_ear_model_init.pth"
 OUTPUT_CKPT = "infant_ear_model_23lm_init.pth"
 
 NUM_LANDMARKS_OLD = 22
@@ -12,8 +12,6 @@ old_state = torch.load(PRETRAINED_CKPT, map_location="cpu")
 
 new_model = model.get_model(NUM_LANDMARKS_NEW, NUM_STAGES)
 new_state = new_model.state_dict()
-
-old_indices = [LANDMARK_MAPPING[i] for i in range(NUM_LANDMARKS_NEW)]
 
 transferred = []
 kept_as_is  = []
