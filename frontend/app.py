@@ -1,9 +1,8 @@
 import gradio as gr
 import numpy as np
-from PIL import Image, ImageDraw
+from PIL import Image
 import torch
 import torchvision.transforms.functional as F
-import sys
 import os
 import cv2
 from model import MultiStageHeatmapModel as EarLandmarkModel, soft_argmax_2d

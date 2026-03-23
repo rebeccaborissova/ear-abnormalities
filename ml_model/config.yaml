@@ -1,0 +1,88 @@
+# Ear Landmark Training Pipeline Configuration
+
+# Stage 1: Adult Training
+adult_training:
+  enabled: true
+  num_landmarks: 55
+  num_stages: 6
+  dataset_path: "/home/UFAD/angelali/ears/dataset/train"
+  input_size: 368
+  heatmap_size: 46
+  batch_size: 8
+  num_workers: 2
+  num_epochs: 100
+  learning_rate: 1e-4
+  weight_decay: 1e-5
+  scheduler:
+    type: "StepLR"
+    step_size: 30
+    gamma: 0.5
+  output_checkpoint: "ear_landmark_model_best.pth"
+  save_interval: 10  # Save checkpoint every N epochs
+
+# Stage 2: Transfer 55 landmarks to 22
+transfer_55_to_22:
+  enabled: true
+  input_checkpoint: "ear_landmark_model_best.pth"
+  output_checkpoint: "infant_ear_model_22lm.pth"
+  num_landmarks_old: 55
+  num_landmarks_new: 22
+  num_stages: 6
+  landmark_mapping:
+    0: 0
+    1: 1
+    2: 2
+    3: 3
+    4: 4
+    5: 5
+    6: 6
+    7: 7
+    8: 8
+    9: 9
+    10: 10
+    11: 11
+    12: 12
+    13: 13
+    14: 14
+    15: 15
+    16: 16
+    17: 17
+    18: 18
+    19: 19
+    20: 37
+    21: 25
+
+# Stage 3: Expand 22 landmarks to 23
+transfer_22_to_23:
+  enabled: true
+  input_checkpoint: "infant_ear_model_22lm.pth"
+  output_checkpoint: "infant_ear_model_23lm.pth"
+  num_landmarks_old: 22
+  num_landmarks_new: 23
+  num_stages: 6
+
+# Stage 4: Infant Training
+infant_training:
+  enabled: true
+  num_landmarks: 23
+  num_stages: 6
+  input_checkpoint: "infant_ear_model_23lm.pth"
+  output_checkpoint: "infant_ear_model_23lm_best.pth"
+  batch_size: 4
+  num_epochs: 100
+  learning_rate: 1e-4
+  weight_decay: 1e-4
+  scheduler:
+    type: "ReduceLROnPlateau"
+    patience: 10
+    factor: 0.5
+
+# GPU Configuration
+gpu:
+  cuda_visible_devices: "7"  # Set to GPU ID or "" for all GPUs
+  use_cuda: true
+
+# General Settings
+general:
+  verbose: true
+  checkpoint_dir: "checkpoints"  # Directory to save all checkpoints
