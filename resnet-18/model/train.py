@@ -15,7 +15,7 @@ import torch.optim as optim
 from tqdm import tqdm
 
 from dataset import EarDataset
-from model import get_model
+from gradio.model import get_model
 from utils import save_model
 
 # Number of landmarks

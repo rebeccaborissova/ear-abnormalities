@@ -1,5 +1,5 @@
 import torch
-import model
+import gradio.model as model
 
 PRETRAINED_CKPT = "infant_ear_model_best.pth"
 OUTPUT_CKPT = "infant_ear_model_23lm_init.pth"

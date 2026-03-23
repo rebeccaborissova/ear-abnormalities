@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader
 
-import model
+import gradio.model as model
 from infant_dataset import get_train_test_split
 
 NUM_LANDMARKS = 22
