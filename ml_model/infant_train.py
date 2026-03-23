@@ -12,19 +12,12 @@ from infant_dataset import get_train_test_split
 
 
 def train_infant_model(config):
-    """
-    Train infant ear landmark model
-    
-    Args:
-        config: Dictionary with training configuration
-    """
-    # Extract config
     NUM_LANDMARKS = config['num_landmarks']
     NUM_STAGES = config['num_stages']
     BATCH_SIZE = config['batch_size']
     NUM_EPOCHS = config['num_epochs']
-    LEARNING_RATE = config['learning_rate']
-    WEIGHT_DECAY = config['weight_decay']
+    LEARNING_RATE = float(config['learning_rate'])
+    WEIGHT_DECAY = float(config['weight_decay'])
     
     device = "cuda" if torch.cuda.is_available() else "cpu"
     print(f"Using device: {device}")
@@ -114,9 +107,8 @@ def train_infant_model(config):
     return best_val_loss
 
 
-# Standalone execution (backwards compatible)
+# For standalone execution (not in pipeline)
 if __name__ == "__main__":
-    # Original standalone config
     config = {
         'num_landmarks': 23,
         'num_stages': 6,
@@ -133,7 +125,6 @@ if __name__ == "__main__":
         }
     }
     
-    # Set environment variables
     os.environ["MKL_THREADING_LAYER"] = "GNU"
     os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
     os.environ["OMP_NUM_THREADS"] = "1"

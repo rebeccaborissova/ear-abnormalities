@@ -22,8 +22,8 @@ def train_adult_model(config):
     NUM_STAGES = config['num_stages']
     BATCH_SIZE = config['batch_size']
     NUM_EPOCHS = config['num_epochs']
-    LEARNING_RATE = config['learning_rate']
-    WEIGHT_DECAY = config['weight_decay']
+    LEARNING_RATE = float(config['learning_rate'])
+    WEIGHT_DECAY = float(config['weight_decay'])
     
     # Use GPU if available
     device = "cuda" if torch.cuda.is_available() else "cpu"

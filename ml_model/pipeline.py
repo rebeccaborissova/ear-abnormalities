@@ -159,20 +159,6 @@ def main():
     parser = argparse.ArgumentParser(
         description='Ear Landmark Training Pipeline',
         formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog="""
-Examples:
-  # Run full pipeline
-  python pipeline.py --config config.yaml
-
-  # Run specific stages
-  python pipeline.py --config config.yaml --stages adult transfer_55_22 transfer_22_23 infant
-
-  # Skip adult training (use existing checkpoint)
-  python pipeline.py --config config.yaml --skip adult
-
-  # Run only transfer stages
-  python pipeline.py --config config.yaml --stages transfer_55_22 transfer_22_23
-        """
     )
     parser.add_argument('--config', type=str, default='config.yaml',
                         help='Path to YAML config file')
@@ -185,17 +171,14 @@ Examples:
     
     args = parser.parse_args()
     
-    # Load configuration
     if not os.path.exists(args.config):
         print(f"Error: Config file '{args.config}' not found")
         sys.exit(1)
     
     config = load_config(args.config)
     
-    # Setup environment
     setup_environment(config)
     
-    # Determine which stages to run
     stage_map = {
         'adult': ('adult_training', run_adult_training),
         'transfer_55_22': ('transfer_55_to_22', run_55_to_22_transfer),
@@ -203,17 +186,14 @@ Examples:
         'infant': ('infant_training', run_infant_training),
     }
     
-    # Build execution list
     if args.stages:
         stages_to_run = args.stages
     else:
-        # Run all enabled stages
         stages_to_run = [
             stage for stage, (cfg_key, _) in stage_map.items()
             if config[cfg_key]['enabled']
         ]
     
-    # Remove skipped stages
     if args.skip:
         stages_to_run = [s for s in stages_to_run if s not in args.skip]
     
@@ -227,7 +207,6 @@ Examples:
     print(f"Stages to execute: {', '.join(stages_to_run)}")
     print("="*60)
     
-    # Execute stages
     for stage in stages_to_run:
         cfg_key, run_func = stage_map[stage]
         try:
