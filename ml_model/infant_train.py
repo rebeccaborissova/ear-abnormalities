@@ -12,6 +12,13 @@ from infant_dataset import get_train_test_split
 
 
 def train_infant_model(config):
+    """
+    Train infant ear landmark model
+    
+    Args:
+        config: Dictionary with training configuration
+    """
+    # Extract config
     NUM_LANDMARKS = config['num_landmarks']
     NUM_STAGES = config['num_stages']
     BATCH_SIZE = config['batch_size']
@@ -29,6 +36,12 @@ def train_infant_model(config):
         print(f"Loading pretrained weights from {config['input_checkpoint']}")
         net.load_state_dict(torch.load(config['input_checkpoint'], map_location=device))
     
+    #TESTING THIS
+    # FREEZE BACKBONE - only train heatmap stages
+    for param in net.feature_extractor.parameters():
+        param.requires_grad = False
+    print("Feature extractor frozen. Training only heatmap stages.")
+
     # Load datasets
     train_dataset, test_dataset = get_train_test_split(num_landmarks=NUM_LANDMARKS)
     train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True)
@@ -107,24 +120,26 @@ def train_infant_model(config):
     return best_val_loss
 
 
-# For standalone execution (not in pipeline)
+# Standalone execution (backwards compatible)
 if __name__ == "__main__":
+    # Original standalone config
     config = {
         'num_landmarks': 23,
         'num_stages': 6,
-        'input_checkpoint': 'infant_ear_model_23lm_init.pth',
-        'output_checkpoint': 'infant_ear_model_23lm_best_v2.pth',
+        'input_checkpoint': 'infant_ear_model_23lm.pth',
+        'output_checkpoint': 'infant_ear_model_23lm_best_v4.pth',
         'batch_size': 4,
-        'num_epochs': 100,
-        'learning_rate': 1e-4,
-        'weight_decay': 1e-4,
+        'num_epochs': 150,
+        'learning_rate': 5e-5,
+        'weight_decay': 5e-4,
         'scheduler': {
             'type': 'ReduceLROnPlateau',
-            'patience': 10,
-            'factor': 0.5
+            'patience': 20,
+            'factor': 0.3
         }
     }
     
+    # Set environment variables
     os.environ["MKL_THREADING_LAYER"] = "GNU"
     os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
     os.environ["OMP_NUM_THREADS"] = "1"
