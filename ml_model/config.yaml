@@ -1,11 +1,10 @@
 # Ear Landmark Training Pipeline Configuration
+# UPDATE THIS BEFORE RUNNING PIPELINE
 
 # Stage 1: Adult Training
 adult_training:
   enabled: true
-  num_landmarks: 55
-  num_stages: 6
-  dataset_path: "/home/UFAD/angelali/ears/dataset/train"
+  dataset_path: "/home/UFAD/angelali/ears/dataset/train" # UPDATE
   input_size: 368
   heatmap_size: 46
   batch_size: 8
@@ -17,14 +16,14 @@ adult_training:
     type: "StepLR"
     step_size: 30
     gamma: 0.5
-  output_checkpoint: "ear_landmark_model_best.pth"
-  save_interval: 10  # Save checkpoint every N epochs
+  output_checkpoint: "ear_landmark_model_best.pth" # UPDATE
+  save_interval: 10 
 
 # Stage 2: Transfer 55 landmarks to 22
 transfer_55_to_22:
   enabled: true
-  input_checkpoint: "ear_landmark_model_best.pth"
-  output_checkpoint: "infant_ear_model_22lm.pth"
+  input_checkpoint: "ear_landmark_model_best.pth" # UPDATE : should match output_checkpoint of adult training
+  output_checkpoint: "infant_ear_model_22lm.pth" # UPDATE
   num_landmarks_old: 55
   num_landmarks_new: 22
   num_stages: 6
@@ -55,27 +54,41 @@ transfer_55_to_22:
 # Stage 3: Expand 22 landmarks to 23
 transfer_22_to_23:
   enabled: true
-  input_checkpoint: "infant_ear_model_22lm.pth"
-  output_checkpoint: "infant_ear_model_23lm.pth"
+  input_checkpoint: "infant_ear_model_22lm.pth" # UPDATE : should match output_checkpoint of transfer_55_to_22
+  output_checkpoint: "infant_ear_model_23lm.pth" # UPDATE
   num_landmarks_old: 22
   num_landmarks_new: 23
   num_stages: 6
 
-# Stage 4: Infant Training
+# Stage 4: Infant Dataset
+infant_dataset:
+  labels_dir: "/home/UFAD/angelali/ears/labels"  # UPDATE : location of json files
+  images_dir: "/home/UFAD/angelali/ears/images/images"  # UPDATE: location of infant ear images
+  json_files: # UPDATE : list of names of json files you want to use from labels_dir
+    - "0001-0010.json"
+    - "0011-0020.json"
+    - "0021-0030.json"
+    - "0031-0050.json"
+    - "0051-0060.json"
+    - "4_score_ears.json"
+    - "category 2 over 60.json"
+    - "NEW100-150.json"
+
+# Stage 5: Infant Training
 infant_training:
   enabled: true
   num_landmarks: 23
   num_stages: 6
-  input_checkpoint: "infant_ear_model_23lm.pth"
-  output_checkpoint: "infant_ear_model_23lm_best.pth"
+  input_checkpoint: "infant_ear_model_23lm.pth" # UPDATE : should match output_checkpoint of transfer_22_to_23
+  output_checkpoint: "infant_ear_model_23lm_best.pth" # UPDATE
   batch_size: 4
-  num_epochs: 100
-  learning_rate: 1e-4
-  weight_decay: 1e-4
+  num_epochs: 150
+  learning_rate: 5e-5
+  weight_decay: 5e-4
   scheduler:
     type: "ReduceLROnPlateau"
-    patience: 10
-    factor: 0.5
+    patience: 20
+    factor: 0.3
 
 # GPU Configuration
 gpu:

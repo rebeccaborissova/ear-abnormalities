@@ -1,3 +1,5 @@
+# see the readme for more information on how to run this pipeline!
+
 import os
 import sys
 import yaml
@@ -5,7 +7,6 @@ import argparse
 from pathlib import Path
 
 def setup_environment(config):
-    """Set up environment variables from config"""
     os.environ["MKL_THREADING_LAYER"] = "GNU"
     os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
     os.environ["OMP_NUM_THREADS"] = "1"
@@ -18,14 +19,11 @@ def setup_environment(config):
 
 
 def load_config(config_path):
-    """Load YAML configuration file"""
     with open(config_path, 'r') as f:
         config = yaml.safe_load(f)
     return config
 
-
 def run_adult_training(config):
-    """Stage 1: Train adult ear model with 55 landmarks"""
     from adult_train import train_adult_model
     
     print("\n" + "="*60)
@@ -37,24 +35,20 @@ def run_adult_training(config):
 
 
 def run_55_to_22_transfer(config):
-    """Stage 2: Transfer 55 landmark model to 22 landmarks"""
     import torch
     import adult_model
     
     print("\n" + "="*60)
-    print("STAGE 2: Transferring 55→22 Landmarks")
+    print("STAGE 2: Transferring 55 to 22 Landmarks")
     print("="*60)
     
     cfg = config['transfer_55_to_22']
     
-    # Load old model
     old_state = torch.load(cfg['input_checkpoint'], map_location="cpu")
     
-    # Create new model
     new_model = adult_model.get_model(cfg['num_landmarks_new'], cfg['num_stages'])
     new_state = new_model.state_dict()
     
-    # Map landmarks
     old_indices = [cfg['landmark_mapping'][i] for i in range(cfg['num_landmarks_new'])]
     
     transferred = []
@@ -93,20 +87,17 @@ def run_55_to_22_transfer(config):
 
 
 def run_22_to_23_transfer(config):
-    """Stage 3: Expand 22 landmarks to 23 landmarks"""
     import torch
     import adult_model
     
     print("\n" + "="*60)
-    print("STAGE 3: Expanding 22→23 Landmarks")
+    print("STAGE 3: Expanding from 22 to 23 Landmarks")
     print("="*60)
     
     cfg = config['transfer_22_to_23']
     
-    # Load old model
     old_state = torch.load(cfg['input_checkpoint'], map_location="cpu")
     
-    # Create new model
     new_model = adult_model.get_model(cfg['num_landmarks_new'], cfg['num_stages'])
     new_state = new_model.state_dict()
     
@@ -120,7 +111,6 @@ def run_22_to_23_transfer(config):
         old_tensor = old_state[key]
         new_tensor = new_state[key]
         
-        # Shapes match — copy directly
         if old_tensor.shape == new_tensor.shape:
             new_state[key] = old_tensor.clone()
             kept_as_is.append(key)
@@ -144,7 +134,6 @@ def run_22_to_23_transfer(config):
 
 
 def run_infant_training(config):
-    """Stage 4: Train infant ear model with 23 landmarks"""
     from infant_train import train_infant_model
     
     print("\n" + "="*60)

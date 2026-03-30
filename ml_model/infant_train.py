@@ -1,6 +1,3 @@
-# infant_train.py
-# Trains infant ear landmark model with transfer learning
-
 import os
 import torch
 import torch.nn as nn
@@ -12,13 +9,6 @@ from infant_dataset import get_train_test_split
 
 
 def train_infant_model(config):
-    """
-    Train infant ear landmark model
-    
-    Args:
-        config: Dictionary with training configuration
-    """
-    # Extract config
     NUM_LANDMARKS = config['num_landmarks']
     NUM_STAGES = config['num_stages']
     BATCH_SIZE = config['batch_size']
@@ -36,11 +26,9 @@ def train_infant_model(config):
         print(f"Loading pretrained weights from {config['input_checkpoint']}")
         net.load_state_dict(torch.load(config['input_checkpoint'], map_location=device))
     
-    #TESTING THIS
-    # FREEZE BACKBONE - only train heatmap stages
     for param in net.feature_extractor.parameters():
         param.requires_grad = False
-    print("Feature extractor frozen. Training only heatmap stages.")
+    print("Backbone frozen. Training only heatmap stages.")
 
     # Load datasets
     train_dataset, test_dataset = get_train_test_split(num_landmarks=NUM_LANDMARKS)
@@ -120,9 +108,8 @@ def train_infant_model(config):
     return best_val_loss
 
 
-# Standalone execution (backwards compatible)
+# Standalone execution - if NOT run in the pipeline. Otherwise, uses the config.yaml information
 if __name__ == "__main__":
-    # Original standalone config
     config = {
         'num_landmarks': 23,
         'num_stages': 6,
@@ -139,7 +126,6 @@ if __name__ == "__main__":
         }
     }
     
-    # Set environment variables
     os.environ["MKL_THREADING_LAYER"] = "GNU"
     os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
     os.environ["OMP_NUM_THREADS"] = "1"

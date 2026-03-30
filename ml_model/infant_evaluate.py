@@ -1,3 +1,5 @@
+# This file is NOT part of the pipeline. Use it to test the model
+
 import os
 import torch
 import cv2
@@ -7,25 +9,24 @@ from torch.utils.data import DataLoader
 from infant_dataset import get_train_test_split
 from adult_model import get_model, soft_argmax_2d
 
-NUM_LANDMARKS = 23
-NUM_STAGES = 6
+# ***************************************************************************************************** 
 
-CKPT_PATH = f"infant_ear_model_{NUM_LANDMARKS}lm_best_v2.pth"
-OUTPUT_DIR = f"infant_eval_results_{NUM_LANDMARKS}"
+# UPDATE THESE VARIABLES BEFORE RUNNING:
+INPUT_MODEL_PATH = f"infant_ear_model_23lm_best_v2.pth" # name of the trained infant ear model
+OUTPUT_DIR = f"infant_eval_results_23" # directory name to save test images in
+IMAGES_DIR = "/home/UFAD/angelali/ears/images/images" # location of infant ear images
+SPECIFIC_IMAGES = ["0148_R.jpg", "0080_R.jpg"] # specific images to test (in addition to test dataset)
 
-IMAGES_DIR = "/home/UFAD/angelali/ears/images/images"
-
-# Specific images to test (in addition to test dataset)
-SPECIFIC_IMAGES = ["0148_R.jpg", "0080_R.jpg"]
+# ***************************************************************************************************** 
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
-model = get_model(NUM_LANDMARKS, NUM_STAGES).to(device)
-model.load_state_dict(torch.load(CKPT_PATH, map_location=device))
+model = get_model(23, 6).to(device)
+model.load_state_dict(torch.load(INPUT_MODEL_PATH, map_location=device))
 model.eval()
-print(f"Loaded checkpoint: {CKPT_PATH}")
+print(f"Loaded checkpoint: {INPUT_MODEL_PATH}")
 
-_, test_dataset = get_train_test_split(num_landmarks=NUM_LANDMARKS)
+_, test_dataset = get_train_test_split(num_landmarks=23)
 test_loader = DataLoader(test_dataset)
 
 os.makedirs(OUTPUT_DIR, exist_ok=True)

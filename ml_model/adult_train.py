@@ -11,21 +11,13 @@ from adult_utils import save_model
 
 
 def train_adult_model(config):
-    """
-    Train adult ear landmark model
-    
-    Args:
-        config: Dictionary with training configuration
-    """
-    # Extract config
-    NUM_LANDMARKS = config['num_landmarks']
-    NUM_STAGES = config['num_stages']
+    NUM_LANDMARKS = 55
+    NUM_STAGES = 6
     BATCH_SIZE = config['batch_size']
     NUM_EPOCHS = config['num_epochs']
     LEARNING_RATE = float(config['learning_rate'])
     WEIGHT_DECAY = float(config['weight_decay'])
     
-    # Use GPU if available
     device = "cuda" if torch.cuda.is_available() else "cpu"
     print(f"Using device: {device}")
     
@@ -131,9 +123,8 @@ def train_adult_model(config):
     return best_loss
 
 
-# Standalone execution (backwards compatible)
+# Standalone execution - if NOT run in the pipeline. Otherwise, uses the config.yaml information
 if __name__ == "__main__":
-    # Original standalone config
     config = {
         'num_landmarks': 55,
         'num_stages': 6,

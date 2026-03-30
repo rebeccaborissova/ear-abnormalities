@@ -6,20 +6,6 @@ import torch
 from torch.utils.data import Dataset
 import random
 
-LABELS_DIR = "/home/UFAD/angelali/ears/labels"
-IMAGES_DIR = "/home/UFAD/angelali/ears/images/images"
-
-JSON_FILES = [
-    "0001-0010.json",
-    "0011-0020.json",
-    "0021-0030.json",
-    "0031-0050.json",
-    "0051-0060.json",
-    "4_score_ears.json",
-    "category 2 over 60.json",
-    "NEW100-150.json"
-]
-
 LANDMARK_MAPPING = {
     0: 0,
     1: 1,
@@ -46,10 +32,10 @@ LANDMARK_MAPPING = {
     22: 56
 }
 
-def load_all_annotations(num_landmarks):
+def load_all_annotations(num_landmarks, labels_dir, json_files):
     all_annotations = {}
-    for json_file in JSON_FILES:
-        json_path = os.path.join(LABELS_DIR, json_file)
+    for json_file in json_files:
+        json_path = os.path.join(labels_dir, json_file)
 
         with open(json_path) as f:
             data = json.load(f)
@@ -91,12 +77,13 @@ def make_gaussian_heatmap(landmarks, height, width, sigma=2.5):
     return heatmaps
 
 class InfantEarDataset(Dataset):
-    def __init__(self, image_files, annotations, augment=False, input_size=368, heatmap_size=23):
+    def __init__(self, image_files, annotations, images_dir, augment=False, input_size=368, heatmap_size=23):
         """
         image_files: list of image filenames
         annotations: dict of filename -> (num_landmarks, 2)
+        images_dir: path to images directory
         """
-        self.images_dir = IMAGES_DIR
+        self.images_dir = images_dir
         self.augment = augment
         self.input_size = input_size
         self.heatmap_size = heatmap_size
@@ -139,8 +126,22 @@ class InfantEarDataset(Dataset):
         )
 
 
-def get_train_test_split(test_ratio=0.2, seed=42, num_landmarks=22):
-    annotations = load_all_annotations(num_landmarks)
+def get_train_test_split(config, test_ratio=0.2, seed=42, num_landmarks=22):
+    """
+    Load infant dataset from config.
+    
+    Args:
+        config: dict with 'infant_dataset' key containing labels_dir, images_dir, json_files
+        test_ratio: fraction of data for testing
+        seed: random seed for reproducibility
+        num_landmarks: number of landmarks to expect
+    """
+    dataset_config = config['infant_dataset']
+    labels_dir = dataset_config['labels_dir']
+    images_dir = dataset_config['images_dir']
+    json_files = dataset_config['json_files']
+    
+    annotations = load_all_annotations(num_landmarks, labels_dir, json_files)
     all_filenames = sorted(annotations.keys())
 
     random.seed(seed)
@@ -153,14 +154,20 @@ def get_train_test_split(test_ratio=0.2, seed=42, num_landmarks=22):
     print(f"Total labeled images: {len(all_filenames)}")
     print(f"Train: {len(train_files)}, Test: {len(test_files)}")
 
-    train_dataset = InfantEarDataset(train_files, annotations, augment=True)
-    test_dataset = InfantEarDataset(test_files,  annotations, augment=False)
+    train_dataset = InfantEarDataset(train_files, annotations, images_dir, augment=True)
+    test_dataset = InfantEarDataset(test_files, annotations, images_dir, augment=False)
 
     return train_dataset, test_dataset
 
 
 if __name__ == "__main__":
-    train_dataset, test_dataset = get_train_test_split(num_landmarks=22)
+    import yaml
+    
+    # Load config from YAML file
+    with open('config.yaml', 'r') as f:
+        config = yaml.safe_load(f)
+    
+    train_dataset, test_dataset = get_train_test_split(config, num_landmarks=22)
     img, heatmaps = train_dataset[0]
     
     print(f"Image shape: {img.shape}")
