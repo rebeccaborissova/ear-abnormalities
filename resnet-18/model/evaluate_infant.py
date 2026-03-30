@@ -5,7 +5,7 @@ import numpy as np
 from torch.utils.data import DataLoader
 
 from infant_dataset import get_train_test_split
-from model import get_model, soft_argmax_2d
+from gradio.model import get_model, soft_argmax_2d
 
 NUM_LANDMARKS = 23
 NUM_STAGES = 6

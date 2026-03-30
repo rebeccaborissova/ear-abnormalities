@@ -1,0 +1,5 @@
+[core]
+    remote = myremote
+['remote "myremote"']
+    url = ssh://ece-focus-xg01.ad.ufl.edu/home/UFAD/jingyifu/ear-project/dvc-storage
+    user = jingyifu

@@ -10,7 +10,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
-from model import get_model, soft_argmax_2d
+from gradio.model import get_model, soft_argmax_2d
 
 # config
 CKPT_55 = "../ear_landmark_model_best.pth"

@@ -9,7 +9,7 @@ import cv2
 import numpy as np
 from torch.utils.data import DataLoader
 from tqdm import tqdm
-from model import get_model, soft_argmax_2d
+from gradio.model import get_model, soft_argmax_2d
 from utils import load_model
 from dataset import EarDataset
 

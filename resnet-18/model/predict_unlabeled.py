@@ -3,7 +3,7 @@ import torch
 import cv2
 import numpy as np
 
-from model import get_model, soft_argmax_2d
+from gradio.model import get_model, soft_argmax_2d
 from utils import load_model
 
 # Directories/files
