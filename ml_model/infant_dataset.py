@@ -5,6 +5,7 @@ import numpy as np
 import torch
 from torch.utils.data import Dataset
 import random
+import yaml
 
 LANDMARK_MAPPING = {
     0: 0,
@@ -132,11 +133,19 @@ def get_train_test_split(config, test_ratio=0.2, seed=42, num_landmarks=22):
     
     Args:
         config: dict with 'infant_dataset' key containing labels_dir, images_dir, json_files
+                OR just the infant_training config (will load full config from config.yaml)
         test_ratio: fraction of data for testing
         seed: random seed for reproducibility
         num_landmarks: number of landmarks to expect
     """
-    dataset_config = config['infant_dataset']
+    # If 'infant_dataset' not in config, load full config from YAML
+    if 'infant_dataset' not in config:
+        with open('config.yaml', 'r') as f:
+            full_config = yaml.safe_load(f)
+        dataset_config = full_config['infant_dataset']
+    else:
+        dataset_config = config['infant_dataset']
+    
     labels_dir = dataset_config['labels_dir']
     images_dir = dataset_config['images_dir']
     json_files = dataset_config['json_files']
