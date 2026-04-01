@@ -12,10 +12,10 @@ from adult_model import get_model, soft_argmax_2d
 # ***************************************************************************************************** 
 
 # UPDATE THESE VARIABLES BEFORE RUNNING:
-INPUT_MODEL_PATH = f"infant_ear_model_23lm_best_v2.pth" # name of the trained infant ear model
+INPUT_MODEL_PATH = f"/Users/angelali/ear-abnormalities/frontend/infant_ear_model_23lm_best_v4.pth" # name of the trained infant ear model
 OUTPUT_DIR = f"infant_eval_results_23" # directory name to save test images in
 IMAGES_DIR = "/home/UFAD/angelali/ears/images/images" # location of infant ear images
-SPECIFIC_IMAGES = ["0148_R.jpg", "0080_R.jpg"] # specific images to test (in addition to test dataset)
+SPECIFIC_IMAGES = ["0148_R.jpg", "0080_R.jpg", "1254_L.jpg", "0148_L.jpg", "1263_R.jpg"] # specific images to test (in addition to test dataset)
 
 # ***************************************************************************************************** 
 

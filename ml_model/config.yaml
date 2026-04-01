@@ -4,7 +4,7 @@
 # Stage 1: Adult Training
 adult_training:
   enabled: true
-  dataset_path: "/home/UFAD/angelali/ears/dataset/train" # UPDATE
+  dataset_path: "/home/UFAD/angelali/ears/dataset/train" # MUST UPDATE
   input_size: 368
   heatmap_size: 46
   batch_size: 8
@@ -62,8 +62,8 @@ transfer_22_to_23:
 
 # Stage 4: Infant Dataset
 infant_dataset:
-  labels_dir: "/home/UFAD/angelali/ears/labels"  # UPDATE : location of json files
-  images_dir: "/home/UFAD/angelali/ears/images/images"  # UPDATE: location of infant ear images
+  labels_dir: "/home/UFAD/angelali/ears/labels"  # MUST UPDATE : location of json files
+  images_dir: "/home/UFAD/angelali/ears/images/images"  # MUST UPDATE: location of infant ear images
   json_files: # UPDATE : list of names of json files you want to use from labels_dir
     - "0001-0010.json"
     - "0011-0020.json"
@@ -80,7 +80,7 @@ infant_training:
   num_landmarks: 23
   num_stages: 6
   input_checkpoint: "infant_ear_model_23lm.pth" # UPDATE : should match output_checkpoint of transfer_22_to_23
-  output_checkpoint: "infant_ear_model_23lm_best.pth" # UPDATE
+  output_checkpoint: "infant_ear_model_v5.pth" # MUST UPDATE : change the version number
   batch_size: 4
   num_epochs: 150
   learning_rate: 5e-5
