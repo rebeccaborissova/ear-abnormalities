@@ -3,9 +3,7 @@ import os
 
 # Directories/files
 LABELS_DIR = "/home/UFAD/rborissova/senior_project/BabyEar4k/labels"
-OUTPUT_DIR = "/home/UFAD/rborissova/senior_project/BabyEar4k/landmarks"
-TRAIN_DIR = os.path.join(OUTPUT_DIR, "train")
-TEST_DIR = os.path.join(OUTPUT_DIR, "test")
+OUTPUT_DIR = "/home/UFAD/rborissova/senior_project/BabyEar4k/landmarks/sus_amongus"
 JSON_FILES_LABELS = [
     "0001-0010.json",
     "0011-0020.json",
@@ -16,11 +14,7 @@ JSON_FILES_LABELS = [
     "4_score_ears.json"
 ]
 
-os.makedirs(TRAIN_DIR, exist_ok=True)
-os.makedirs(TEST_DIR,  exist_ok=True)
-
-train = list(range(1, 31)) + list(range(52, 1000))
-test = range(31, 51)
+os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 for file in JSON_FILES_LABELS:
     file_path = os.path.join(LABELS_DIR, file)
@@ -31,18 +25,6 @@ for file in JSON_FILES_LABELS:
 
     for entry in entries:
         filename = entry["filename"]
-        stem = os.path.splitext(filename)[0]
-        number = int(stem.split("_")[0])
-        side = stem.split("_")[1]
-
-        if number in train:
-            prefix = "train"
-            output_dir = TRAIN_DIR
-        elif number in test:
-            prefix = "test"
-            output_dir = TEST_DIR
-        else:
-            print(f"ERROR: {filename} is not in testing or training range!")
 
         landmarks = [(r["shape_attributes"]["cx"], r["shape_attributes"]["cy"])
                      for r in entry["regions"]
@@ -58,5 +40,5 @@ for file in JSON_FILES_LABELS:
         ]
 
         file_name = filename.replace(".jpg", ".txt")
-        with open(os.path.join(output_dir, file_name), "w") as f:
+        with open(os.path.join(OUTPUT_DIR, file_name), "w") as f:
             f.write("\n".join(lines) + "\n")
