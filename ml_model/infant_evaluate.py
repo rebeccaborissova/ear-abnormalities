@@ -9,11 +9,13 @@ from torch.utils.data import DataLoader
 from infant_dataset import get_train_test_split
 from adult_model import get_model, soft_argmax_2d
 
+
+
 # ***************************************************************************************************** 
 
 # UPDATE THESE VARIABLES BEFORE RUNNING:
-INPUT_MODEL_PATH = f"/Users/angelali/ear-abnormalities/frontend/infant_ear_model_23lm_best_v4.pth" # name of the trained infant ear model
-OUTPUT_DIR = f"infant_eval_results_23" # directory name to save test images in
+INPUT_MODEL_PATH = "/home/UFAD/mansapatel/ear-abnormalities/ml_model/infant_ear_model_v5.pth" # name of the trained infant ear model
+OUTPUT_DIR = "infant_eval_results_23" # directory name to save test images in
 IMAGES_DIR = "/home/UFAD/angelali/ears/images/images" # location of infant ear images
 SPECIFIC_IMAGES = ["0148_R.jpg", "0080_R.jpg", "1254_L.jpg", "0148_L.jpg", "1263_R.jpg"] # specific images to test (in addition to test dataset)
 
@@ -26,7 +28,7 @@ model.load_state_dict(torch.load(INPUT_MODEL_PATH, map_location=device))
 model.eval()
 print(f"Loaded checkpoint: {INPUT_MODEL_PATH}")
 
-_, test_dataset = get_train_test_split(num_landmarks=23)
+_, test_dataset = get_train_test_split({}, num_landmarks=23)
 test_loader = DataLoader(test_dataset)
 
 os.makedirs(OUTPUT_DIR, exist_ok=True)

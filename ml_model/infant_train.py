@@ -3,9 +3,16 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader
+import numpy as np
 
 import adult_model
 from infant_dataset import get_train_test_split
+from infant_confidence_utils import (
+    get_confidence_for_landmarks,
+    get_total_confidence,
+    should_predict,
+    print_confidence_statistics
+)
 
 
 def train_infant_model(config):
@@ -31,7 +38,7 @@ def train_infant_model(config):
     print("Backbone frozen. Training only heatmap stages.")
 
     # Load datasets
-    train_dataset, test_dataset = get_train_test_split(num_landmarks=NUM_LANDMARKS)
+    train_dataset, test_dataset = get_train_test_split(config, num_landmarks=NUM_LANDMARKS)
     train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True)
     test_loader = DataLoader(test_dataset, batch_size=1)
     
@@ -81,6 +88,9 @@ def train_infant_model(config):
         # Validation
         net.eval()
         val_loss = 0.0
+        val_confidences = []
+        per_landmark_confidences = {i: [] for i in range(NUM_LANDMARKS)}
+        total_confidences = []
         
         with torch.no_grad():
             for imgs, target_heatmaps in test_loader:
@@ -91,12 +101,39 @@ def train_infant_model(config):
                 # Use only final stage for validation
                 loss = criterion(stage_outputs[:, -1], target_heatmaps)
                 val_loss += loss.item()
+                
+                # Track confidence scores
+                confidences = get_confidence_for_landmarks(stage_outputs[:, -1].squeeze())
+                val_confidences.extend(confidences)
+                
+                # Track per-landmark confidences
+                for i, conf in enumerate(confidences):
+                    per_landmark_confidences[i].append(conf)
+                
+                # Track total confidence (mean across all landmarks)
+                total_conf = get_total_confidence(confidences, metric='mean')
+                total_confidences.append(total_conf)
         
         val_loss /= len(test_loader)
+        val_confidences = np.array(val_confidences)
+        total_confidences = np.array(total_confidences)
         scheduler.step(val_loss)
         
+        # Compute confidence statistics
+        high_conf_ratio = np.sum(val_confidences >= 0.6) / len(val_confidences) * 100
+        medium_conf_ratio = np.sum((val_confidences >= 0.4) & (val_confidences < 0.6)) / len(val_confidences) * 100
+        low_conf_ratio = np.sum(val_confidences < 0.4) / len(val_confidences) * 100
+        
+        mean_conf = np.mean(val_confidences)
+        mean_total_conf = np.mean(total_confidences)
+        median_total_conf = np.median(total_confidences)
+        
+        # Print detailed stats
         print(f"Epoch {epoch+1}/{NUM_EPOCHS} | "
-              f"Train Loss: {train_loss:.6f} | Val Loss: {val_loss:.6f}")
+              f"Train Loss: {train_loss:.6f} | Val Loss: {val_loss:.6f} | "
+              f"Avg Conf: {mean_conf:.3f} | High Conf%: {high_conf_ratio:.1f}%")
+        print(f"  → Confidence breakdown: High {high_conf_ratio:.1f}% | Medium {medium_conf_ratio:.1f}% | Low {low_conf_ratio:.1f}%")
+        print(f"  → Total confidence: Mean {mean_total_conf:.3f} | Median {median_total_conf:.3f}")
         
         # Save best model
         if val_loss < best_val_loss:
