@@ -3,13 +3,13 @@
 import subprocess
 import sys
 import os
-
+ 
 TESTS = [
     ("Preprocessing", "test_preprocessing.py"),
     ("Model Output", "test_model_output.py"),
     ("Accuracy Calculation", "test_accuracy.py"),
     ("Robustness", "test_robustness.py"),
-    ("23-Point Model on Adult Dataset",    "test_adult_dataset.py"),
+    ("23-Point Model on Adult Dataset", "test_adult_dataset.py"),
 ]
 
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
@@ -21,7 +21,7 @@ for label, script in TESTS:
     print(f"{'='*60}")
     ret = subprocess.run([sys.executable, script])
     results.append((label, script, ret.returncode))
-
+    
 print(f"\n{'='*60}")
 print("  FINAL RESULTS")
 print(f"{'='*60}")
