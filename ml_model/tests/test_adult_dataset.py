@@ -120,7 +120,7 @@ for img_path, txt_path, fname in pairs:
     if bw < 5 or bh < 5:
         continue
 
-    # ground truth (22 mapped landmarks, normalised to crop)
+    # ground truth
     gt22     = pts55[INDICES_55_TO_22]
     gt22_n   = np.clip(
         np.stack([(gt22[:, 0] - x1) / (bw - 1), (gt22[:, 1] - y1) / (bh - 1)], axis=1),

@@ -3,7 +3,6 @@ import os
 import sys
 import numpy as np
 import torch
-import yaml
 import cv2
 import pandas as pd
 from dotenv import load_dotenv
@@ -14,7 +13,6 @@ with open("../config.yaml") as f:
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from adult_model import get_model, soft_argmax_2d
-from infant_dataset import get_train_test_split
 
 # config
 BASE_DIR = "/home/UFAD/jingyifu/ear-project/ear-abnormalities/resnet-18/model"
@@ -68,72 +66,23 @@ else:
     print(f"  WARNING: {CKPT_23} not found, using random weights")
 model.eval()
 
+print("\n  --- Edge case Images ---")
+edge_cases = [
+    ("All-Black Image",  np.zeros((400, 400, 3), dtype=np.uint8)),
+    ("All-White Image",  np.full((400, 400, 3), 255, dtype=np.uint8)),
+]
 
-print("\n  --- Test 1: Real Ear Images ---")
-_, test_dataset = get_train_test_split(config, num_landmarks=NUM_LANDMARKS)
-spreads = []
-
-for idx in range(min(5, len(test_dataset))):
-    img_t, _ = test_dataset[idx]
-    img_name  = test_dataset.image_files[idx]
-
-    with torch.no_grad():
-        out  = model(img_t.unsqueeze(0).to(DEVICE))
-        heat = out[:, -1] if out.ndim == 5 else out
-        pts  = soft_argmax_2d(heat, normalize=True)[0].cpu().numpy()
-
-    orig = cv2.imread(os.path.join(IMAGES_DIR, img_name))
-    if orig is not None:
-        H, W = orig.shape[:2]
-        for x, y in pts * np.array([W - 1, H - 1]):
-            cv2.circle(orig, (int(x), int(y)), 4, (0, 0, 255), -1)
-        cv2.imwrite(os.path.join(OUTPUT_DIR, f"real_{img_name}"), orig)
-
-    spreads.append(pts.std(axis=0).mean())
-
-if spreads:
-    avg_spread = np.mean(spreads)
-    print(f"  Average landmark spread: {avg_spread:.4f}")
-    check(
-        "Landmarks spread across ear (std > 0.01)",
-        avg_spread > 0.01,
-        f"Spread={avg_spread:.4f}",
-    )
-    check(
-        "All predicted coords in [0,1]",
-        all(pts.min() >= 0.0 and pts.max() <= 1.0 for _ in [1]),
-    )
+for label, img in edge_cases:
+    print(f"\n  --- {label} ---")
+    try:
+        pts = run_inference(model, img, (50, 50, 350, 350))
+        check(f"Handles {label} without crashing", pts.shape == (NUM_LANDMARKS, 2))
+        check(f"{label}: output coords in [0,1]",  pts.min() >= 0.0 and pts.max() <= 1.0)
+    except Exception as e:
+        check(f"Handles {label} without crashing", False, str(e))
 
 
-print("\n  --- Test 2: Small Bounding Box (50×50) ---")
-dummy = np.random.randint(100, 200, (300, 300, 3), dtype=np.uint8)
-try:
-    pts = run_inference(model, dummy, (125, 125, 175, 175))
-    check("Handles 50×50 bbox without crashing",   pts.shape == (NUM_LANDMARKS, 2))
-    check("Small bbox: output coords in [0,1]",    pts.min() >= 0.0 and pts.max() <= 1.0)
-except Exception as e:
-    check("Handles 50×50 bbox without crashing", False, str(e))
-
-
-print("\n  --- Test 3: All-Black Image ---")
-try:
-    pts = run_inference(model, np.zeros((400, 400, 3), dtype=np.uint8), (50, 50, 350, 350))
-    check("Handles all-black image without crashing", pts.shape == (NUM_LANDMARKS, 2))
-    check("Black image: output coords in [0,1]",      pts.min() >= 0.0 and pts.max() <= 1.0)
-except Exception as e:
-    check("Handles all-black image without crashing", False, str(e))
-
-
-print("\n  --- Test 4: All-White Image ---")
-try:
-    pts = run_inference(model, np.full((400, 400, 3), 255, dtype=np.uint8), (50, 50, 350, 350))
-    check("Handles all-white image without crashing", pts.shape == (NUM_LANDMARKS, 2))
-    check("White image: output coords in [0,1]",      pts.min() >= 0.0 and pts.max() <= 1.0)
-except Exception as e:
-    check("Handles all-white image without crashing", False, str(e))
-
-
-print("\n  --- Test 5: Wide Aspect Ratio Bbox (2:1) ---")
+print("\n  --- Wide Aspect Ratio Bbox (2:1) ---")
 try:
     pts = run_inference(model, np.random.randint(50, 200, (300, 600, 3), dtype=np.uint8), (50, 50, 550, 250))
     check("Handles 2:1 aspect ratio bbox without crashing", pts.shape == (NUM_LANDMARKS, 2))

@@ -1,41 +1,37 @@
-import yaml
 import os
-import yaml
 import sys
-import yaml
 import csv
 import yaml
 import numpy as np
-import yaml
 import torch
 import cv2
 from torch.utils.data import DataLoader
 from dotenv import load_dotenv
 
 load_dotenv()
-import yaml
-with open("../config.yaml") as f:
-    config = yaml.safe_load(f)
+
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from adult_model import get_model, soft_argmax_2d
 from infant_dataset import get_train_test_split
 
-BASE_DIR = "/home/UFAD/jingyifu/ear-project/ear-abnormalities/resnet-18/model"
-CKPT_23          = os.path.join(BASE_DIR, "infant_ear_model_23lm_best.pth")
-OUTPUT_DIR       = "test_outputs/accuracy"
-VIS_DIR          = "test_outputs/accuracy/visualizations"
-IMAGES_DIR       = os.environ.get("INFANT_IMAGES_DIR", "")
-ERROR_THRESHOLD  = 0.25
-NUM_LANDMARKS    = 23
-NUM_STAGES       = 6
-DEVICE           = "cuda" if torch.cuda.is_available() else "cpu"
+with open("../config.yaml") as f:
+    config = yaml.safe_load(f)
+
+BASE_DIR        = "/home/UFAD/jingyifu/ear-project/ear-abnormalities/resnet-18/model"
+CKPT_23         = os.path.join(BASE_DIR, "infant_ear_model_23lm_best.pth")
+OUTPUT_DIR      = "test_outputs/accuracy"
+VIS_DIR         = "test_outputs/accuracy/visualizations"
+IMAGES_DIR      = os.environ.get("INFANT_IMAGES_DIR", "")
+ERROR_THRESHOLD = 0.25
+NUM_LANDMARKS   = 23
+NUM_STAGES      = 6
+DEVICE          = "cuda" if torch.cuda.is_available() else "cpu"
 
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 os.makedirs(VIS_DIR, exist_ok=True)
 
 PASSED = 0
 FAILED = 0
-
 
 def check(name, condition, detail=""):
     global PASSED, FAILED
@@ -45,7 +41,6 @@ def check(name, condition, detail=""):
     else:
         print(f"  [FAIL] {name}  {detail}")
         FAILED += 1
-
 
 print("\n======== Accuracy Evaluation ========")
 model = get_model(NUM_LANDMARKS, NUM_STAGES).to(DEVICE)
@@ -64,31 +59,26 @@ rows       = []
 
 with torch.no_grad():
     for idx, (imgs, target_heatmaps) in enumerate(test_loader):
-        imgs = imgs.to(DEVICE)
-
-        gt   = soft_argmax_2d(target_heatmaps, normalize=True).cpu().numpy().squeeze()
-        out  = model(imgs)
-        heat = out[:, -1] if out.ndim == 5 else out
-        pred = soft_argmax_2d(heat, normalize=True).cpu().numpy().squeeze()
-
+        imgs     = imgs.to(DEVICE)
+        gt       = soft_argmax_2d(target_heatmaps, normalize=True).cpu().numpy().squeeze()
+        out      = model(imgs)
+        heat     = out[:, -1] if out.ndim == 5 else out
+        pred     = soft_argmax_2d(heat, normalize=True).cpu().numpy().squeeze()
         errors   = np.sqrt(np.sum((pred - gt) ** 2, axis=1))
-        mean_err = errors.mean()
-        all_errors.append(mean_err)
+        all_errors.append(errors.mean())
 
-        # visualize
         img_name = test_dataset.image_files[idx]
         orig = cv2.imread(os.path.join(IMAGES_DIR, img_name))
         if orig is not None:
             H, W = orig.shape[:2]
             for x, y in pred * np.array([W - 1, H - 1]):
-                cv2.circle(orig, (int(x), int(y)), 5, (0, 0, 255), -1)   # red = pred
+                cv2.circle(orig, (int(x), int(y)), 5, (0, 0, 255), -1)
             for x, y in gt * np.array([W - 1, H - 1]):
-                cv2.circle(orig, (int(x), int(y)), 5, (0, 255, 0), -1)   # green = GT
+                cv2.circle(orig, (int(x), int(y)), 5, (0, 255, 0), -1)
             cv2.imwrite(os.path.join(VIS_DIR, f"result_{img_name}"), orig)
 
         rows.append({
-            "image":      img_name,
-            "mean_error": round(mean_err, 6),
+            "image": img_name, "mean_error": round(errors.mean(), 6),
             **{f"lm{i+1}_error": round(errors[i], 6) for i in range(NUM_LANDMARKS)},
         })
 
@@ -99,22 +89,19 @@ print(f"  Median error  : {np.median(all_errors):.6f}")
 print(f"  Std deviation : {all_errors.std():.6f}")
 print(f"  Min / Max     : {all_errors.min():.6f} / {all_errors.max():.6f}")
 
-check(
-    f"Average error below threshold ({ERROR_THRESHOLD})",
-    all_errors.mean() < ERROR_THRESHOLD,
-    f"Got {all_errors.mean():.6f}",
-)
+check(f"Average error below threshold ({ERROR_THRESHOLD})",
+      all_errors.mean() < ERROR_THRESHOLD, f"Got {all_errors.mean():.6f}")
 check("No NaN errors", not any(np.isnan(e) for e in all_errors))
 
-# save CSV
 csv_path   = os.path.join(OUTPUT_DIR, "accuracy_results.csv")
 fieldnames = ["image", "mean_error"] + [f"lm{i+1}_error" for i in range(NUM_LANDMARKS)]
 with open(csv_path, "w", newline="") as f:
-    csv.DictWriter(f, fieldnames=fieldnames).writeheader()
-    csv.DictWriter(f, fieldnames=fieldnames).writerows(rows)
+    w = csv.DictWriter(f, fieldnames=fieldnames)
+    w.writeheader()
+    w.writerows(rows)
+
 print(f"\n  Results saved to {csv_path}")
 print(f"  Visualizations saved to {VIS_DIR}/")
-
 print(f"\n======== Summary ========")
 print(f"  PASSED: {PASSED}")
 print(f"  FAILED: {FAILED}")
