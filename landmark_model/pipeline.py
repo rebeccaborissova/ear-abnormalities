@@ -143,6 +143,24 @@ def run_infant_training(config):
     train_infant_model(config['infant_training'])
     print("✓ Infant training completed")
 
+def run_predict_unlabeled(config):
+    print("\n" + "="*60)
+    print("STAGE 5: Predicting Unlabeled Images")
+    print("="*60)
+    import predict_unlabeled
+    print("✓ Prediction completed")
+
+def run_postprocess(config):
+    print("\n" + "="*60)
+    print("STAGE 6: Computing Measurements")
+    print("="*60)
+    from postprocess.measurements import process_csv
+    process_csv(
+        config['predict_unlabeled']['landmarks_csv'],
+        config['postprocess']['measurements_csv']
+    )
+    print("✓ Measurements completed")
+
 
 def main():
     parser = argparse.ArgumentParser(
@@ -150,14 +168,13 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     parser.add_argument('--config', type=str, default='config.yaml',
-                        help='Path to YAML config file')
+                        help='Path to YAML config file'),
     parser.add_argument('--stages', nargs='+',
-                        choices=['adult', 'transfer_55_22', 'transfer_22_23', 'infant'],
+                        choices=['adult', 'transfer_55_22', 'transfer_22_23', 'infant', 'predict', 'postprocess'],
                         help='Specific stages to run (default: all enabled stages)')
     parser.add_argument('--skip', nargs='+',
-                        choices=['adult', 'transfer_55_22', 'transfer_22_23', 'infant'],
+                        choices=['adult', 'transfer_55_22', 'transfer_22_23', 'infant', 'predict', 'postprocess'],
                         help='Stages to skip')
-    
     args = parser.parse_args()
     
     if not os.path.exists(args.config):
@@ -173,6 +190,8 @@ def main():
         'transfer_55_22': ('transfer_55_to_22', run_55_to_22_transfer),
         'transfer_22_23': ('transfer_22_to_23', run_22_to_23_transfer),
         'infant': ('infant_training', run_infant_training),
+        'predict': ('predict_unlabeled', run_predict_unlabeled),
+        'postprocess': ('postprocess', run_postprocess)
     }
     
     if args.stages:

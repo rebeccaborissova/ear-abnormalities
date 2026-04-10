@@ -12,3 +12,4 @@ resnet-18/model/tests/.env
 
 resnet-18/model/tests/test_outputs/
 
+*.pth

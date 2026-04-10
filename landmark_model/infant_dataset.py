@@ -5,7 +5,17 @@ import numpy as np
 import torch
 from torch.utils.data import Dataset
 import random
-import yaml
+
+JSON_FILES = [
+    "0001-0010.json",
+    "0011-0020.json",
+    "0021-0030.json",
+    "0031-0050.json",
+    "0051-0060.json",
+    "4_score_ears.json",
+    "category 2 over 60.json",
+    "NEW100-150.json"
+]
 
 LANDMARK_MAPPING = {
     0: 0,
@@ -33,9 +43,9 @@ LANDMARK_MAPPING = {
     22: 56
 }
 
-def load_all_annotations(num_landmarks, labels_dir, json_files):
+def load_all_annotations(labels_dir, num_landmarks):
     all_annotations = {}
-    for json_file in json_files:
+    for json_file in JSON_FILES:
         json_path = os.path.join(labels_dir, json_file)
 
         with open(json_path) as f:
@@ -127,30 +137,8 @@ class InfantEarDataset(Dataset):
         )
 
 
-def get_train_test_split(config, test_ratio=0.2, seed=42, num_landmarks=22):
-    """
-    Load infant dataset from config.
-    
-    Args:
-        config: dict with 'infant_dataset' key containing labels_dir, images_dir, json_files
-                OR just the infant_training config (will load full config from config.yaml)
-        test_ratio: fraction of data for testing
-        seed: random seed for reproducibility
-        num_landmarks: number of landmarks to expect
-    """
-    # If 'infant_dataset' not in config, load full config from YAML
-    if 'infant_dataset' not in config:
-        with open('config.yaml', 'r') as f:
-            full_config = yaml.safe_load(f)
-        dataset_config = full_config['infant_dataset']
-    else:
-        dataset_config = config['infant_dataset']
-    
-    labels_dir = dataset_config['labels_dir']
-    images_dir = dataset_config['images_dir']
-    json_files = dataset_config['json_files']
-    
-    annotations = load_all_annotations(num_landmarks, labels_dir, json_files)
+def get_train_test_split(labels_dir, images_dir, test_ratio=0.2, seed=42, num_landmarks=22):
+    annotations = load_all_annotations(labels_dir, num_landmarks)
     all_filenames = sorted(annotations.keys())
 
     random.seed(seed)
@@ -164,7 +152,7 @@ def get_train_test_split(config, test_ratio=0.2, seed=42, num_landmarks=22):
     print(f"Train: {len(train_files)}, Test: {len(test_files)}")
 
     train_dataset = InfantEarDataset(train_files, annotations, images_dir, augment=True)
-    test_dataset = InfantEarDataset(test_files, annotations, images_dir, augment=False)
+    test_dataset  = InfantEarDataset(test_files,  annotations, images_dir, augment=False)
 
     return train_dataset, test_dataset
 
