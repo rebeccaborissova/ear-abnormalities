@@ -1,11 +1,11 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
+import sys
 import os
-import yaml
 
-with open(os.path.join(os.path.dirname(__file__), "..", "config.yaml")) as f:
-    cfg = yaml.safe_load(f)
+sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
+from utils.classification_utils import load_config, parse_label, extract_side
 
 MEASUREMENTS_CSV = "../landmark_model/postprocess/measurements.csv"
 LABELS_CSV = cfg['diagnosis_csv']
@@ -22,25 +22,6 @@ MEASUREMENT_COLS = [
 
 TARGET_COL = "label_a"
 VALID_CLASSES = [0, 1, 2, 3, 4]
-
-
-def parse_label(label_str):
-    try:
-        parts = str(label_str).strip().split('+')
-        if len(parts) != 3:
-            return None
-        return int(parts[0]), int(parts[1]), int(parts[2])
-    except (ValueError, AttributeError):
-        return None
-
-
-def extract_side(img_name):
-    if len(img_name) > 5 and img_name[5] in ("L", "R"):
-        return img_name[5]
-    for candidate in ("_L_", "_R_", "/L/", "/R/"):
-        if candidate in img_name:
-            return candidate[1]
-    return None
 
 
 def load_dataset(measurements_csv, labels_csv):
