@@ -1,9 +1,14 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
+import os
+import yaml
 
-MEASUREMENTS_CSV = "/home/UFAD/rborissova/senior_project/ear-abnormalities/measurements/measurements.csv"
-LABELS_CSV = "/home/UFAD/rborissova/senior_project/BabyEar4k/diagnosis_result.csv"
+with open(os.path.join(os.path.dirname(__file__), "..", "config.yaml")) as f:
+    cfg = yaml.safe_load(f)
+
+MEASUREMENTS_CSV = "../landmark_model/postprocess/measurements.csv"
+LABELS_CSV = cfg['diagnosis_csv']
 
 MEASUREMENT_COLS = [
     'dist_4_17_norm',
@@ -15,7 +20,7 @@ MEASUREMENT_COLS = [
     'chord_arc_ratio',
 ]
 
-TARGET_COL    = "label_a"
+TARGET_COL = "label_a"
 VALID_CLASSES = [0, 1, 2, 3, 4]
 
 
