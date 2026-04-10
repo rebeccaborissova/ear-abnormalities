@@ -43,7 +43,11 @@ def train_infant_model(config):
     print("Feature extractor frozen. Training only heatmap stages.")
 
     # Load datasets
-    train_dataset, test_dataset = get_train_test_split(num_landmarks=NUM_LANDMARKS)
+    train_dataset, test_dataset = get_train_test_split(
+        labels_dir=config['labels_dir'],
+        images_dir=config['images_dir'],
+        num_landmarks=NUM_LANDMARKS,
+    )
     train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True)
     test_loader = DataLoader(test_dataset, batch_size=1)
     

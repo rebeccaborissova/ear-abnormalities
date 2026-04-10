@@ -129,11 +129,9 @@ def process_csv(input_path, output_path):
 
 
 if __name__ == '__main__':
-    if len(sys.argv) >= 3:
-        input_file = sys.argv[1]
-        output_file = sys.argv[2]
-    else:
-        input_file = 'landmarks.csv'
-        output_file = 'measurements.csv'
-    
+    import yaml
+    with open(os.path.join(os.path.dirname(__file__), "..", "config.yaml")) as f:
+        cfg = yaml.safe_load(f)
+    input_file  = cfg['predict_unlabeled']['landmarks_csv']
+    output_file = cfg['convert_landmarks']['measurements_csv']
     process_csv(input_file, output_file)

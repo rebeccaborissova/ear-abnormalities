@@ -6,9 +6,6 @@ import torch
 from torch.utils.data import Dataset
 import random
 
-LABELS_DIR = "/home/UFAD/angelali/ears/labels"
-IMAGES_DIR = "/home/UFAD/angelali/ears/images/images"
-
 JSON_FILES = [
     "0001-0010.json",
     "0011-0020.json",
@@ -46,10 +43,10 @@ LANDMARK_MAPPING = {
     22: 56
 }
 
-def load_all_annotations(num_landmarks):
+def load_all_annotations(labels_dir, num_landmarks):
     all_annotations = {}
     for json_file in JSON_FILES:
-        json_path = os.path.join(LABELS_DIR, json_file)
+        json_path = os.path.join(labels_dir, json_file)
 
         with open(json_path) as f:
             data = json.load(f)
@@ -91,12 +88,12 @@ def make_gaussian_heatmap(landmarks, height, width, sigma=2.5):
     return heatmaps
 
 class InfantEarDataset(Dataset):
-    def __init__(self, image_files, annotations, augment=False, input_size=368, heatmap_size=23):
+    def __init__(self, image_files, annotations, images_dir, augment=False, input_size=368, heatmap_size=23):
         """
         image_files: list of image filenames
         annotations: dict of filename -> (num_landmarks, 2)
         """
-        self.images_dir = IMAGES_DIR
+        self.images_dir = images_dir
         self.augment = augment
         self.input_size = input_size
         self.heatmap_size = heatmap_size
@@ -139,8 +136,8 @@ class InfantEarDataset(Dataset):
         )
 
 
-def get_train_test_split(test_ratio=0.2, seed=42, num_landmarks=22):
-    annotations = load_all_annotations(num_landmarks)
+def get_train_test_split(labels_dir, images_dir, test_ratio=0.2, seed=42, num_landmarks=22):
+    annotations = load_all_annotations(labels_dir, num_landmarks)
     all_filenames = sorted(annotations.keys())
 
     random.seed(seed)
@@ -153,8 +150,8 @@ def get_train_test_split(test_ratio=0.2, seed=42, num_landmarks=22):
     print(f"Total labeled images: {len(all_filenames)}")
     print(f"Train: {len(train_files)}, Test: {len(test_files)}")
 
-    train_dataset = InfantEarDataset(train_files, annotations, augment=True)
-    test_dataset = InfantEarDataset(test_files,  annotations, augment=False)
+    train_dataset = InfantEarDataset(train_files, annotations, images_dir, augment=True)
+    test_dataset  = InfantEarDataset(test_files,  annotations, images_dir, augment=False)
 
     return train_dataset, test_dataset
 

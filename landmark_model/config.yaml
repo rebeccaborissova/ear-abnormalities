@@ -1,4 +1,6 @@
 # Ear Landmark Training Pipeline Configuration
+images_dir: "/home/UFAD/rborissova/senior_project/BabyEar4k/images"
+labels_dir: "/home/UFAD/angelali/ears/labels"
 
 # Stage 1: Adult Training
 adult_training:
@@ -17,14 +19,14 @@ adult_training:
     type: "StepLR"
     step_size: 30
     gamma: 0.5
-  output_checkpoint: "ear_landmark_model_best.pth"
+  output_checkpoint: "checkpoints/ear_landmark_model_best.pth"
   save_interval: 10  # Save checkpoint every N epochs
 
 # Stage 2: Transfer 55 landmarks to 22
 transfer_55_to_22:
   enabled: true
-  input_checkpoint: "ear_landmark_model_best.pth"
-  output_checkpoint: "infant_ear_model_22lm.pth"
+  input_checkpoint: "checkpoints/ear_landmark_model_best.pth"
+  output_checkpoint: "checkpoints/infant_ear_model_22lm.pth"
   num_landmarks_old: 55
   num_landmarks_new: 22
   num_stages: 6
@@ -55,8 +57,8 @@ transfer_55_to_22:
 # Stage 3: Expand 22 landmarks to 23
 transfer_22_to_23:
   enabled: true
-  input_checkpoint: "infant_ear_model_22lm.pth"
-  output_checkpoint: "infant_ear_model_23lm.pth"
+  input_checkpoint: "checkpoints/infant_ear_model_22lm.pth"
+  output_checkpoint: "checkpoints/infant_ear_model_23lm.pth"
   num_landmarks_old: 22
   num_landmarks_new: 23
   num_stages: 6
@@ -66,8 +68,9 @@ infant_training:
   enabled: true
   num_landmarks: 23
   num_stages: 6
-  input_checkpoint: "infant_ear_model_23lm.pth"
-  output_checkpoint: "infant_ear_model_23lm_best.pth"
+  input_checkpoint: "checkpoints/infant_ear_model_23lm.pth"
+  output_checkpoint: "checkpoints/infant_ear_model_23lm_best.pth"
+  eval_output_dir: "infant_eval_results"
   batch_size: 4
   num_epochs: 100
   learning_rate: 1e-4
@@ -76,6 +79,20 @@ infant_training:
     type: "ReduceLROnPlateau"
     patience: 10
     factor: 0.5
+  input_size: 368
+  heatmap_size: 23
+
+# Stage 5: Predict Unlabeled Data
+predict_unlabeled:
+  enabled: true
+  output_dir: "/home/UFAD/rborissova/senior_project/BabyEar4k/predicted_labels"
+  landmarks_csv: "postprocess/landmarks.csv"
+  confidences_csv: "postprocess/confidences.csv"
+
+# Stage 6: Postprocess
+postprocess:
+  enabled: true
+  measurements_csv: "postprocess/measurements.csv"
 
 # GPU Configuration
 gpu:

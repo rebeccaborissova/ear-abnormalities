@@ -1,6 +1,7 @@
 import os
 import torch
 import cv2
+import yaml
 import numpy as np
 from torch.utils.data import DataLoader
 
@@ -10,10 +11,11 @@ from adult_model import get_model, soft_argmax_2d
 NUM_LANDMARKS = 23
 NUM_STAGES = 6
 
-CKPT_PATH = f"infant_ear_model_{NUM_LANDMARKS}lm_best_v2.pth"
-OUTPUT_DIR = f"infant_eval_results_{NUM_LANDMARKS}"
-
-IMAGES_DIR = "/home/UFAD/angelali/ears/images/images"
+with open("config.yaml") as f:
+    _cfg = yaml.safe_load(f)
+IMAGES_DIR = _cfg['infant_training']['images_dir']
+CKPT_PATH  = _cfg['infant_training']['output_checkpoint']
+OUTPUT_DIR = f"{_cfg['infant_training']['eval_output_dir']}_{NUM_LANDMARKS}"
 
 # Specific images to test (in addition to test dataset)
 SPECIFIC_IMAGES = ["0148_R.jpg", "0080_R.jpg"]
