@@ -12,3 +12,12 @@ resnet-18/model/tests/.env
 
 resnet-18/model/tests/test_outputs/
 
+ml_model/infant_ear_model_v5.pth
+ml_model/infant_ear_model_best.pth
+ml_model/ear_landmark_model_best.pth
+ml_model/infant_ear_model_22lm.pth
+ml_model/infant_ear_model_23lm.pth
+ml_model/ear_landmark_model_best_epoch_80.pth
+
+resnet-18/model/ear_landmark_model_best.pth
+

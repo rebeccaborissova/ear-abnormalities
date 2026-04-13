@@ -3,9 +3,18 @@ import numpy as np
 from PIL import Image
 import torch
 import os
+import sys
 import cv2
 import math
 from model import MultiStageHeatmapModel as EarLandmarkModel, soft_argmax_2d
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+from ml_model.infant_confidence_utils import (
+    get_confidence_for_landmarks,
+    get_total_confidence,
+    draw_landmarks_with_confidence,
+    get_confidence_color,
+)
 
 # TO RUN: python app.py
 
@@ -41,6 +50,8 @@ def detect_ear_abnormalities(image):
         coords = soft_argmax_2d(final_heatmaps, normalize=True)
     
     pred = coords[0].cpu().numpy()
+    confidences = get_confidence_for_landmarks(final_heatmaps[0].cpu().numpy())
+    total_confidence = get_total_confidence(confidences, metric='mean')
     
     # denormalize to original image space
     pred_px = pred * np.array([orig_w - 1, orig_h - 1])
@@ -59,29 +70,22 @@ def detect_ear_abnormalities(image):
     ear_height = dist(pred_px[0], pred_px[19])
     ref = ear_height if ear_height > 0 else 1
 
-    # draw landmarks
     for (i, j, color, label) in line_pairs:
         pt1 = (int(pred_px[i][0]), int(pred_px[i][1]))
         pt2 = (int(pred_px[j][0]), int(pred_px[j][1]))
         cv2.line(img_cv, pt1, pt2, color, 3, cv2.LINE_AA)
-    
-    landmark_colors = {
-        **{i: (255, 255, 255) for i in range(0, 20)},
-        0:  (255, 50,  50),   # ear height/upper height
-        8:  (255, 165,  0),   # upper height
-        19: (255, 50,  50),   # ear height
-        4:  (255, 255,  0),   # ear width
-        17: (255, 255,  0),   # ear width
-        20: (0,  200, 255),   # inner width
-        21: (0,  255, 100),   # inner width/inner height
-        22: (200, 0, 255),   # inner height
-    }
-    
-    for i, (x, y) in enumerate(pred_px):
-        color = landmark_colors.get(i, (255, 255, 255))
-        size = 10 if i in [20, 21, 22] else 6
-        cv2.circle(img_cv, (int(x), int(y)), size, color, -1)
-        cv2.circle(img_cv, (int(x), int(y)), size, (0, 0, 0), 1)
+
+    img_cv = draw_landmarks_with_confidence(
+        img_cv,
+        pred_px,
+        confidences,
+        high_conf_threshold=0.8,
+        medium_conf_threshold=0.6,
+        low_conf_threshold=0.4,
+        confidence_style='distinct',
+        show_confidence_text=True,
+        label_only_index=True,
+    )
 
     img_result = Image.fromarray(cv2.cvtColor(img_cv, cv2.COLOR_BGR2RGB))
 
@@ -94,16 +98,60 @@ def detect_ear_abnormalities(image):
     ]
 
     legend_items = [
-        ("#FFFFFF", "Pts 0–19: Helix outline"), # pt: 0-19
-        ("#FFB400", "Pt 20: Tragus"), # pt: 20
-        ("#00FF64", "Pt 21: Superior helix"), # pt: 21
-        ("#C800FF", "Pt 22: Cartilage intersection"), # pt: 22
+        ("#FFFFFF", "Pts 0–19: Helix outline"),
+        ("#FFB400", "Pt 20: Tragus"),
+        ("#00FF64", "Pt 21: Superior helix"),
+        ("#C800FF", "Pt 22: Cartilage intersection"),
     ]
     
     legend_html = "<div style='display:grid; grid-template-columns:1fr 1fr; gap:8px 24px; margin-bottom:16px;'>"
     for color, name in legend_items:
         legend_html += f"<span><span style='color:{color}; font-size:18px;'>●</span> {name}</span>"
     legend_html += "</div>"
+
+    # confidence summary
+    high_count = int(np.sum(confidences >= 0.8))
+    medium_count = int(np.sum((confidences >= 0.6) & (confidences < 0.8)))
+    low_count = int(np.sum( confidences < 0.6))
+    
+
+    confidence_legend_items = [
+        ("#00FF00", "High confidence ≥ 0.8"),
+        ("#FFFF00", "Medium confidence ≥ 0.6"),
+        ("#FF0000", "Low confidence < 0.6"),
+    ]
+    confidence_legend_html = "<div style='display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin:12px 0 16px;'>"
+    for color, name in confidence_legend_items:
+        confidence_legend_html += f"<span><span style='color:{color}; font-size:18px;'>●</span> {name}</span>"
+    confidence_legend_html += "</div>"
+
+    per_landmark_html = "<div style='display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:6px;'>"
+    for idx, conf in enumerate(confidences):
+        color = get_confidence_color(conf, confidence_style='distinct')
+        hex_color = f"#{color[2]:02X}{color[1]:02X}{color[0]:02X}"
+        per_landmark_html += (
+            f"<span style='display:flex; align-items:center; gap:6px; white-space:nowrap;'>"
+            f"<span style='color:{hex_color}; font-size:16px;'>●</span>"
+            f"Pt {idx}: {conf:.2f}</span>"
+        )
+    per_landmark_html += "</div>"
+
+    confidence_html = f"""
+    <div style='margin-top:16px;'>
+        <h4 style='margin-bottom:8px;'>Confidence Scoring</h4>
+        <p style='margin:0 0 8px;'>Total confidence (mean): <strong>{total_confidence:.3f}</strong></p>
+        <div style='display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:6px; margin-bottom:12px;'>
+            <span>High: <strong>{high_count}</strong></span>
+            <span>Medium: <strong>{medium_count}</strong></span>
+            <span>Low: <strong>{low_count}</strong></span>
+        </div>
+        {confidence_legend_html}
+        <div style='font-size:14px; line-height:1.4; color:#333;'>
+            <strong>Per-landmark scores</strong>
+        </div>
+        {per_landmark_html}
+    </div>
+    """
 
     # statistics table
     table_html = "<table style='width:100%; border-collapse:collapse;'>"
@@ -119,7 +167,7 @@ def detect_ear_abnormalities(image):
             <td style='padding:6px 8px; text-align:right; font-weight:bold;'>{val}</td>
         </tr>"""
     table_html += "</table>"
-    html_output = legend_html + table_html
+    html_output = legend_html + table_html + confidence_html
 
     return img_result, html_output
 

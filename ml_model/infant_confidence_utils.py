@@ -268,17 +268,18 @@ def draw_landmarks_with_confidence(image, landmarks_px, confidences,
                                    medium_conf_threshold=0.6,
                                    low_conf_threshold=0.4,
                                    confidence_style='distinct',
-                                   show_confidence_text=True):
+                                   show_confidence_text=True,
+                                   label_only_index=False):
     """
     Draw landmarks on image with confidence-based visualization.
 
     All dots are the same size (radius=6, filled). Only color differs:
       Green  : >= 0.8
       Yellow : 0.6 – 0.8
-      Red    : 0.4 – 0.6
-      (skipped) : < 0.4
+      Red    : < 0.6
+  
 
-    Every visible dot gets a "idx:conf" label regardless of confidence level.
+    Every visible dot can be labeled with either "idx" or "idx:conf".
 
     Args:
         image: OpenCV image (H, W, 3)
@@ -286,9 +287,10 @@ def draw_landmarks_with_confidence(image, landmarks_px, confidences,
         confidences: numpy array of shape (num_landmarks,)
         high_conf_threshold: Threshold for high confidence (default: 0.8)
         medium_conf_threshold: Threshold for medium confidence (default: 0.6)
-        low_conf_threshold: Threshold below which landmark is 
+        low_conf_threshold: Threshold below which landmark is hidden
         confidence_style: 'distinct' or 'gradient'
-        show_confidence_text: Whether to show "idx:conf" label next to every dot
+        show_confidence_text: Whether to show text label next to every dot
+        label_only_index: If True, show only landmark index instead of score
 
     Returns:
         image: Modified image with drawn landmarks
@@ -312,9 +314,12 @@ def draw_landmarks_with_confidence(image, landmarks_px, confidences,
         # Draw filled circle — same size for every landmark
         cv2.circle(img, (x, y), RADIUS, color, THICKNESS)
 
-        # Label every visible dot with index and confidence score
+        # Label every visible dot with index and optional confidence score
         if show_confidence_text:
-            text = f"{idx}:{confidence:.2f}"
+            if label_only_index:
+                text = f"{idx}"
+            else:
+                text = f"{idx}:{confidence:.2f}"
             cv2.putText(img, text, (x + 9, y - 5),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.4, color, 1)
 
