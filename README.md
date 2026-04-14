@@ -9,6 +9,10 @@ This project develops a machine learning–based framework for objective assessm
 
 Instead of treating deformity detection as a black-box classification problem, we focus on measurement-driven and clinically interpretable modeling.
 
+<img width="1190" height="412" alt="image" src="https://github.com/user-attachments/assets/e46e8e42-9b7d-4d1a-a4b7-5f0385be81ef" />
+<img width="1189" height="705" alt="image" src="https://github.com/user-attachments/assets/5464bf10-95d6-442d-905b-05b59ad3da95" />
+
+
 ## Credits
 **ear-landmark-detection-with-CNN** folder is based on https://github.com/kbulutozler/ear-landmark-detection-with-CNN. This was an existing model. In our project, we use this repository as a baseline landmark detector. We adapt the training pipeline to our dataset and work on improving landmark localization stability.
 
