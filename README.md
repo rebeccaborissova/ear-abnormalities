@@ -1,4 +1,5 @@
 # ear-abnormalities
+https://huggingface.co/spaces/rebeccassova/Infant_Ear_Abnormalities
 
 ## Overview 
 This project develops a machine learning–based framework for objective assessment of infant ear deformities. Current diagnosis in pediatric plastic surgery is largely subjective. Our goal is to build a standardized, quantitative pipeline that:
