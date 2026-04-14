@@ -16,6 +16,8 @@ from backend.landmark_model.infant_confidence_utils import (
     get_confidence_color,
 )
 
+# TO RUN: python app.py
+
 os.environ['GRADIO_TEMP_DIR'] = os.path.expanduser('~/gradio_tmp')
 os.makedirs(os.environ['GRADIO_TEMP_DIR'], exist_ok=True)
 
