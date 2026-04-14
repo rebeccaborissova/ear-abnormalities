@@ -134,20 +134,23 @@ def run_22_to_23_transfer(config):
 
 
 def run_infant_training(config):
-    from infant_train import train_infant_model
-    
     print("\n" + "="*60)
     print("STAGE 4: Training Infant Ear Model (23 landmarks)")
     print("="*60)
     
-    train_infant_model(config['infant_training'])
+    cfg = config['infant_training']
+    cfg['labels_dir'] = config['labels_dir']
+    cfg['images_dir'] = config['images_dir']
+
+    from infant_train import train_infant_model
+    train_infant_model(cfg)
     print("✓ Infant training completed")
 
 def run_predict_unlabeled(config):
     print("\n" + "="*60)
     print("STAGE 5: Predicting Unlabeled Images")
     print("="*60)
-    import predict_unlabeled
+    import infant_predict_unlabeled
     print("✓ Prediction completed")
 
 def run_postprocess(config):

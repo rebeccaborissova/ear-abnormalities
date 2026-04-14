@@ -67,7 +67,7 @@ def process_csv(input_path, output_path):
             landmark_str = ', '.join(row[1:])
             landmarks = parse_landmarks(landmark_str)
             
-            if len(landmarks) < 55:
+            if len(landmarks) != 23:
                 print(f"Warning: {image_path} has only {len(landmarks)} landmarks, skipping")
                 continue
             
