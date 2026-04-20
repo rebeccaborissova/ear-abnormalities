@@ -34,9 +34,10 @@ As shown by the above screenshots, once the user uploads an image, 23 ear landma
 1. Clone the main branch of this repository. 
 2. Download the adult ear data from [iBug](https://ibug.doc.ic.ac.uk/resources/ibug-ears/). (If iBug link is down, use this [Dropbox link](http://dropbox.com/scl/fo/v544dqjmv5ti960p9lt51/ALrRps5ancIav_lQBY4B2qw?rlkey=7crct8zov0riqgpjjzd9swhnw&dl=0)). 
 3. Download the infant ear data from [BabyEar4k](https://doi.org/10.6084/m9.figshare.c.6841596.v1).
-4. In the terminal, go to the `backend/landmark_model` folder. 
-5. Update the `config.yaml` file, specifically considering the variables that are labeled “UPDATE”, such as file paths of the downloaded dataset.
-6. Run `python pipeline.py` to run the full pipeline, starting to train the adult ear model first and then the infant ear model. If the adult ear model is already trained, you can skip the adult model steps by running `python pipeline.py –skip adult`. See further configurable options in the `README.md` in that folder.
+4. Download the infant ear landmark data from the [Google Drive link](https://drive.google.com/drive/folders/1HNYxZGkIvAOmsIgl-0oyTgxEorL0YoLb?usp=sharing).
+5. In the terminal, go to the `backend/landmark_model` folder. 
+6. Update the `config.yaml` file, specifically considering the variables that are labeled “UPDATE”, such as file paths of the downloaded dataset.
+7. Run `python pipeline.py` to run the full pipeline, starting to train the adult ear model first and then the infant ear model. If the adult ear model is already trained, you can skip the adult model steps by running `python pipeline.py –skip adult`. See further configurable options in the `README.md` in that folder.
 
 
 ## Credits
