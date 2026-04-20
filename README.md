@@ -21,6 +21,15 @@ As shown by the above screenshots, once the user uploads an image, 23 ear landma
 - NumPy
 - Gradio
 
+## Folder Overview
+- **frontend**: This folder has the Gradio-integrated user accessible app for the model. There are also versions of the trained model inside, with the most current version being `infant_ear_model_23lm_best_v4.pth`.
+- **backend/EDA_scripts**: This folder has various scripts used to understand the breakdown of infant ear data available and labeled.
+- **backend/classification_model**: This folder has the model that takes the ear landmarks and measurements and classifies the ears into the possible ear abnormality diagnoses.
+- **backend/landmark_model**: This folder has the model that predicts adult and infant ear landmarks.
+- **backend/tests**: This folder tests aspects of our landmark prediction model with preprocessing, model output, accuracy, and robustness tests.
+- **backend/utils**: This folder has some other files used across the backend.
+- **archive**: This was a previous version of the ear landmark prediction model based on [this CNN model](https://github.com/kbulutozler/ear-landmark-detection-with-CNN). It was modified and finetuned, but ultimately discontinued due to the ResNet-18 heatmap model being more accurate.
+
 ## How to Train the Ear Landmark Prediction model
 1. Clone the main branch of this repository. 
 2. Download the adult ear data from [iBug](https://ibug.doc.ic.ac.uk/resources/ibug-ears/). (If iBug link is down, use this [Dropbox link](http://dropbox.com/scl/fo/v544dqjmv5ti960p9lt51/ALrRps5ancIav_lQBY4B2qw?rlkey=7crct8zov0riqgpjjzd9swhnw&dl=0)). 
