@@ -31,16 +31,23 @@ MEASUREMENT_COLS = [
     'arc_length_norm',
     'chord_arc_ratio',
 ]
+
 LANDMARK_COLS = [f'lm_{i}_{axis}' for i in range(23) for axis in ['x', 'y']]
 
 KEY_LANDMARKS = [3, 4, 5, 20, 21, 22]
+
 KEY_RELATIVE_COLS = [
     f'key_rel_{axis}_{i}_{j}'
     for i, j in combinations(KEY_LANDMARKS, 2)
     for axis in ['x', 'y']
 ]
 
+# 20 angle features from all unique triplets of the 6 key landmarks
+ANGLE_TRIPLETS = list(combinations(KEY_LANDMARKS, 3))
+ANGLE_COLS = [f'angle_deg_{i}_{j}_{k}' for i, j, k in ANGLE_TRIPLETS]
+
 COMBINED_COLS = MEASUREMENT_COLS + KEY_RELATIVE_COLS
+COMBINED_WITH_ANGLES_COLS = MEASUREMENT_COLS + KEY_RELATIVE_COLS + ANGLE_COLS
 
 SEED = 42
 TARGET_COL = "label_a"
@@ -56,6 +63,24 @@ def normalize_landmarks(points):
     if ear_height > 0:
         pts /= ear_height
     return pts
+
+
+def compute_angle_deg(a, b, c):
+    """
+    Returns angle ABC in degrees, where the angle is at point B.
+    """
+    ba = np.array(a, dtype=np.float32) - np.array(b, dtype=np.float32)
+    bc = np.array(c, dtype=np.float32) - np.array(b, dtype=np.float32)
+
+    norm_ba = np.linalg.norm(ba)
+    norm_bc = np.linalg.norm(bc)
+
+    if norm_ba == 0 or norm_bc == 0:
+        return np.nan
+
+    cos_theta = np.dot(ba, bc) / (norm_ba * norm_bc)
+    cos_theta = np.clip(cos_theta, -1.0, 1.0)
+    return np.degrees(np.arccos(cos_theta))
 
 
 def load_landmarks(landmarks_csv):
@@ -159,6 +184,22 @@ def add_key_relative_positions(df):
     return pd.concat([df, pd.DataFrame(new_cols, index=df.index)], axis=1)
 
 
+def add_angle_features(df, angle_triplets=ANGLE_TRIPLETS):
+    new_cols = {}
+
+    for i, j, k in angle_triplets:
+        values = []
+        for _, row in df.iterrows():
+            a = (row[f'lm_{i}_x'], row[f'lm_{i}_y'])
+            b = (row[f'lm_{j}_x'], row[f'lm_{j}_y'])
+            c = (row[f'lm_{k}_x'], row[f'lm_{k}_y'])
+            values.append(compute_angle_deg(a, b, c))
+
+        new_cols[f'angle_deg_{i}_{j}_{k}'] = values
+
+    return pd.concat([df, pd.DataFrame(new_cols, index=df.index)], axis=1)
+
+
 def make_rf():
     return RandomForestClassifier(
         n_estimators=300,
@@ -220,15 +261,14 @@ def run_cv(X, y, label="", model=None):
 
 
 def run_decision_tree(X, y):
-    print("\n" + "="*50)
+    print("\n" + "=" * 50)
     print("=== Decision Tree — Interpretable Rules ===")
-    print("="*50)
+    print("=" * 50)
 
     tree = DecisionTreeClassifier(max_depth=4, class_weight='balanced', random_state=SEED)
     all_preds, all_probas, classes, n_classes = _run_cv_loop(X, y, tree, N_FOLDS, SEED)
     _print_cv_results(y, all_preds, all_probas, classes, n_classes, "Decision Tree")
 
-    # Fit on full dataset to extract rules
     smote = SMOTE(random_state=SEED)
     imputer_full = SimpleImputer(strategy="median")
     X_imp_full = imputer_full.fit_transform(X)
@@ -249,15 +289,24 @@ if __name__ == "__main__":
     print(df[TARGET_COL].value_counts().sort_index())
 
     df = add_key_relative_positions(df)
+    df = add_angle_features(df)
+
     y = df[TARGET_COL].astype(int).copy()
 
     X_meas = df[MEASUREMENT_COLS].copy()
     run_cv(X_meas, y, label="Measurements only (7 features)")
 
     X_key = df[KEY_RELATIVE_COLS].copy()
-    run_cv(X_key, y, label="Key landmarks only (30 features)")
+    run_cv(X_key, y, label=f"Key landmarks only ({len(KEY_RELATIVE_COLS)} features)")
 
     X_combined = df[COMBINED_COLS].copy()
-    run_cv(X_combined, y, label="Measurements + key landmarks (37 features)")
+    run_cv(X_combined, y, label=f"Measurements + key landmarks ({len(COMBINED_COLS)} features)")
 
-    run_decision_tree(X_combined, y)
+    X_combined_angles = df[COMBINED_WITH_ANGLES_COLS].copy()
+    run_cv(
+        X_combined_angles,
+        y,
+        label=f"Measurements + key landmarks + angles ({len(COMBINED_WITH_ANGLES_COLS)} features)"
+    )
+
+    run_decision_tree(X_combined_angles, y)
